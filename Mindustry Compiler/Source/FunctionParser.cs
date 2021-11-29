@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+
+/// <summary>
+/// Parse funciton calls and definitions.
+/// </summary>
 
 namespace Mindustry_Compiler
 {
@@ -49,7 +52,6 @@ namespace Mindustry_Compiler
         static FunctionInfo mainFunctionInfo => builtInFunctions[0];
         static FunctionInfo sleepFunctionInfo => builtInFunctions[1];
         static FunctionInfo waitFunctionInfo => builtInFunctions[2];
-        static FunctionInfo waitForFunctionInfo => builtInFunctions[3];
 
 
         public class FunctionInfo
@@ -246,14 +248,32 @@ namespace Mindustry_Compiler
             // Split params
             var pvals = paramsInner.SplitByParamCommas();
 
-            // Is sleep function? Prepend asm later ...
-            bool wasSleepCalled = sleepFunctionCalled;
-            sleepFunctionCalled |= fnName == "sleep" && pvals.Count == 1;
-            if (sleepFunctionCalled && !wasSleepCalled)
-                functionMap.Add(fnName, sleepFunctionInfo);
-
             // Get function obj ref ...
             var fnObj = FindFunctionInfo(fnName, pvals.Count);
+
+
+            // ~~~~~~~~ Built-in function?
+            if (builtInFunctions.Contains(fnObj))
+            {
+                if (fnName != "sleep")
+                {
+                    code.Add(BuildCode(
+                    "op",               // Op
+                    fnName,             // Function
+                    ""
+                    ));
+                }
+
+                // Is sleep function? Add 'sleep()' asm later ...
+                bool wasSleepCalled = sleepFunctionCalled;
+                sleepFunctionCalled |= fnName == "sleep" && pvals.Count == 1;
+                if (sleepFunctionCalled && !wasSleepCalled)
+                    functionMap.Add(fnName, sleepFunctionInfo);
+            }
+
+
+            
+
             
             if (fnObj == null)
                 throw new Exception("Could not find function def: " + fnName + "(" + pvals.Count + ")");

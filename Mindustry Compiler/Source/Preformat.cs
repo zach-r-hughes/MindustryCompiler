@@ -29,6 +29,7 @@ namespace Mindustry_Compiler
             compileLineIndex = -1;
             PreFormat_StripComments(ref source);
             PreFormat_AliasStringLiterals_Input(ref source);
+            Preformat_IncDec(ref source);
             PreFormat_FormatNewlines(ref source);
         }
 
@@ -69,6 +70,12 @@ namespace Mindustry_Compiler
             source = Regex.Replace(source, @"(\/\*)((?!\*\/)(.|\n|\r))*(\*\/)", e => "").Trim();
         }
 
+        void Preformat_IncDec(ref string source)
+        {
+            // Fix 'cell' increment/decrement ...
+            var rxMemIncDec = new Regex(@"\b(?<a>(?!\b=\b).*)(?<b>\+\+|--)\s*;?\s*(\n|$)");
+            source = rxMemIncDec.Replace(source, e => e.GetStr("a") + " " + e.GetStr("b").Substring(0, 1) + "= 1; \n");
+        }
 
         /// <summary>
         /// Format new-lines (no blanks, semicolons = newline, etc.)

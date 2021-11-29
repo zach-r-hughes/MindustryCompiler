@@ -157,6 +157,12 @@ namespace Mindustry_Compiler
         /// <summary>
         /// Finds the currenty focused window's title (check if Mindustry).
         /// </summary>
+        
+        [DllImport("user32.dll")]
+        static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
         private string GetActiveWindowTitle()
         {
             const int nChars = 256;

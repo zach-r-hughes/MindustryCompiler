@@ -236,13 +236,47 @@ namespace Mindustry_Compiler
                         index = ParseRval(index);
                         rhs = ParseRval(rhs);
 
-                        string asm = BuildCode(
-                                "write",        // Op
-                                rhs,            // Value
-                                lhs,            // Destination Cell
-                                index          // Index
-                            );
-                        code.Add(asm);
+                        if (assignOp == "=")
+                        {
+                            string asm = BuildCode(
+                                    "write",        // Op
+                                    rhs,            // Value
+                                    lhs,            // Memory cell
+                                    index           // Index
+                                );
+                            code.Add(asm);
+                        }
+                        else
+                        {
+                            // Read memory to 'tmpvar'...
+                            string tmpvar = getNewIntermediateName();
+                            code.Add(BuildCode(
+                                "read",             // Op
+                                tmpvar,             // Destination
+                                lhs,                // Memory cell
+                                index               // Index
+                                ));
+
+
+                            // Do operator to 'tmpvar' ...
+                            string op = opMap[assignOp.Substring(0, 1)];
+                            code.Add(BuildCode(
+                                "op",               // Op
+                                op,                 // Operation
+                                tmpvar,             // Destination
+                                tmpvar,             // Operand 1
+                                rhs                 // Operand 2
+                                ));
+
+                            // Write 'tmpvar' to memory
+                            string asm = BuildCode(
+                                "write",            // Op
+                                tmpvar,             // Value
+                                lhs,                // Memory cell
+                                index               // Index
+                                );
+                            code.Add(asm);
+                        }
                     }
                     break;
 

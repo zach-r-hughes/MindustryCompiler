@@ -128,16 +128,18 @@ namespace Mindustry_Compiler
                             throw new Exception("Cannot call main function manually.");
 
                         string destination = getNewIntermediateName();
-                        string innerVariableName = ParseRval(inner);
+                        var pvals = inner.SplitByParamCommas();
+                        string a = pvals.Count >= 1 ? ParseRval(pvals[0]) : "a";
+                        string b = pvals.Count >= 2 ? ParseRval(pvals[1]) : "b";
+
                         string asm = BuildCode(
                             "op",
                             fnName,                 // Function name
                             destination,            // Destination
-                            innerVariableName,      // Operand
-                            "b"                     // Unused
+                            a,                      // Operand 1
+                            b                       // Operand 2
                             );
                         code.Add(asm);
-
                         rval = rval.ReplaceSection(match.Index, nextIndex - match.Index, destination);
                         curIndex = nextIndex;
                     }
