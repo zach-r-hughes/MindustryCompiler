@@ -118,6 +118,22 @@ namespace Mindustry_Compiler
             chkCompileOnSaveSource.Checked = Properties.Settings.Default.CompileOnSave;
             chkCompileOnFocus.Checked = Properties.Settings.Default.CompileOnFocus;
             CompileFromSourceFile();
+
+            if (SourcePath.Length == 0)
+            {
+                txtAsm.Text =
+                    "\r\n\r\n" + 
+                    "   Mindustry Compiler" + "\r\n" +
+                    "   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" + "\r\n" +
+                    "   Open your text editor and create a" + "\r\n" +
+                    "   .txt/.cpp source file, then choose" + "\r\n" +
+                    "   its path in the field box above. " + "\r\n" +
+                    "   " + "\r\n" +
+                    "   View the 'readme' for an overview on" + "\r\n" +
+                    "   features and syntax.";
+
+                txtCompileMsg.Text = "";
+            }
         }
 
 
