@@ -1,28 +1,64 @@
-# Special Keywords
-### Resources
-> @copper
-> @lead
-> @scrap
-> @sand
-> @coal
-> @titanium
-> @thorium
-> @graphite
-> @metaglass
-> @spore-pod
-> @silicon
-> @plastanium
-> @phase-fabric
-> @surge alloy
-> @blast-compound
-> @pyratite
-### Liquids
-> @water
-> @oil
-> @slag
-> @cryofluid
+
+![Mindustry Compiler Icon](https://i.imgur.com/xW0zxYJ.png)
+
+# Mindustry Compiler
+
+Mindustry Compiler is an open-source C-style compiler for the game Mindustry. You can write basic C-style programs in your favorite code editor, and the program will compile it into assembly-like language that is compatible for the logic processors in game.
+![Mindustry Compiler screenshot](https://i.imgur.com/5J60pUm.png)
+
+To use it, create a `.cpp`, `.c`, or `.txt` file in your text editor of choice. Then, click the `Open` button at the top of the Mindustry compiler.
+
+As you change the source file, and when you switch focus into Mindustry, the Mindustry compiler will automatically compile the contents of your source file into your clipboard.
+
+When you switch into the game, a compilation overlay will breifly appear. Select a logic processor and select 'Import From Clipboard'.
+
+![GjAscIk.png (347×180)](https://i.imgur.com/GjAscIk.png)
+
+... and then you're all set!
+
+__Features__
+* C-style programming
+* Automatic compilation to clipboard
+* Program structure flexibility
+* Arithmetic parsing
+* Memory cell access (`cell2[i]`)
+* Branching (`if`, `else if`, `else`)
+* Loops (`for`, `while`, etc.)
+* Custom function definitions
+* Built-in `sleep()` and `wait()` functions
+* Direct assembly injection (`asm()`)
+* Preprocessor `#defines`
+
+# Program Structure
+
+__basic program__
+```c
+// This is a simple program
+conveyor1.enabled = false;
+sleep(2);
+conveyor1.enabled = true;
+sleep(1);
+```
+
+__advanced program__
+```c
+// Initialization code
+// Code that is outside 'main()' runs only once on start.
+i = 0;
+
+// Main function
+// Loops forever. Variable values do not reset on loop.
+void main()
+{
+	i++;
+	println(i);
+	sleep(1);
+}
+```
+
 
 ### Typenames
+Typenames are ignored.
 ```c
 // Type names do not matter (left in for C-style compatibility)
 static const volatile int number = "hello world";
@@ -33,6 +69,7 @@ println(number);
 myStr = "hello";
 ```
 ### Return
+Return either exits a custom function, or ends program execution (if inside `main()`)
 ```c
 void myFunction()
 {
@@ -45,8 +82,9 @@ int i = 5;
 // Main loop
 void main()
 {
-	
 	print(myFunction());
+	
+	// Restart program (equivalent to 'end')
 	return;
 }
 ```
@@ -180,10 +218,10 @@ for (int i = 0; i < 10; i++)
 
 
 
-# Object/Building (sensor/control)
+## Game Object Control (sensor/control)
 ```c
 // Get or set properties objects using dot-properties.
-// Equivalent to 'control/sensor' commands.
+// (equivalent to 'control/sensor' commands)
 
 // Turn conveyors/buildings on or off
 conveyor1.enabled = false;
@@ -200,50 +238,24 @@ if (vault1.totalItems < 5)
 	println("your vault is empty bruh");
 }
 ```
-# Preprocessor
+## Preprocessor #define
 ```c
 // C-style preprocessor defines (primative implementation)
 // Preprocessor functions are not supported (yet).
 
-// Paste 'cell[5]' every time we write 'Q'
+// Tell compiler to replace 'Q' with 'cell[35 + x]'
 #define Q cell[35 + x]
+
 x = 2;
 Q = 3 * x;
 println(cell[35 + x]);
 // prints '6';
 ```
 
-# Program Structure
-
-__basic program__
-```c
-// This is a simple program
-conveyor1.enabled = false;
-sleep(2);
-conveyor1.enabled = true;
-sleep(1);
-```
-
-__advanced program__
-```c
-// Initialization code
-// Code that is outside 'main()' runs only once on start.
-i = 0;
-
-// Main function
-// Loops forever. Variable values do not reset on loop.
-void main()
-{
-	i++;
-	println(i);
-	sleep(1);
-}
-```
-
 ### Main function
 The main loop of the funciton. Loops forever. Calling `return` in main will 'end' the program, starting it over (re-initialize).
 
-# Custom function definitions
+## Custom function definitions
 ```c
 // Custom function declaration
 void doCustomThing(number, string)
