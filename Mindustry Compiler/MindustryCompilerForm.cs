@@ -55,7 +55,6 @@ namespace Mindustry_Compiler
         public MindustryCompilerForm()
         {
             InitializeComponent();
-            chkAutoCompile.Checked = true;
         }
 
         /// <summary>
@@ -85,8 +84,9 @@ namespace Mindustry_Compiler
                 Properties.Settings.Default.Minimized = true;
             }
 
-
             Properties.Settings.Default.SourcePath = txtPath.Text;
+            Properties.Settings.Default.CompileOnSave = chkCompileOnSaveSource.Checked;
+            Properties.Settings.Default.CompileOnFocus = chkCompileOnFocus.Checked;
             Properties.Settings.Default.Save();
         }
 
@@ -113,8 +113,10 @@ namespace Mindustry_Compiler
                 Size = Properties.Settings.Default.Size;
             }
 
-            // ~~~~~~~~ Restore source path
+            // ~~~~~~~~ Restore controls (path, compile checkboxes)
             SourcePath = Properties.Settings.Default.SourcePath;
+            chkCompileOnSaveSource.Checked = Properties.Settings.Default.CompileOnSave;
+            chkCompileOnFocus.Checked = Properties.Settings.Default.CompileOnFocus;
             CompileFromSourceFile();
         }
 
@@ -148,7 +150,8 @@ namespace Mindustry_Compiler
         /// </summary>
         private void fswSource_Changed(object sender, FileSystemEventArgs e)
         {
-            CompileToClipboard();
+            if (e.ChangeType != WatcherChangeTypes.Deleted && chkCompileOnSaveSource.Checked)
+                CompileToClipboard();
         }
 
 
@@ -183,7 +186,7 @@ namespace Mindustry_Compiler
         private void tmrGameFocused_Tick(object sender, EventArgs e)
         {
             // Feature not enabled? Return ...
-            if (!chkAutoCompile.Checked)
+            if (!chkCompileOnFocus.Checked)
                 return;
 
             // Is mindustry focused?

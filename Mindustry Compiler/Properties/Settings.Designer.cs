@@ -82,5 +82,29 @@ namespace Mindustry_Compiler.Properties {
                 this["SourcePath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool CompileOnFocus {
+            get {
+                return ((bool)(this["CompileOnFocus"]));
+            }
+            set {
+                this["CompileOnFocus"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool CompileOnSave {
+            get {
+                return ((bool)(this["CompileOnSave"]));
+            }
+            set {
+                this["CompileOnSave"] = value;
+            }
+        }
     }
 }
