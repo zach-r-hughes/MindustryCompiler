@@ -88,6 +88,8 @@ namespace Mindustry_Compiler
                 if (lastSb.Length > 0)
                     output.Add(lastSb);
             }
+
+            // Remove typenames from each string ...
             return output;
         }
     }

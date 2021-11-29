@@ -30,6 +30,7 @@ namespace Mindustry_Compiler
             PreFormat_StripComments(ref source);
             PreFormat_AliasStringLiterals_Input(ref source);
             Preformat_IncDec(ref source);
+            PreFormat_SingleLineControl(ref source);
             PreFormat_FormatNewlines(ref source);
         }
 
@@ -100,7 +101,7 @@ namespace Mindustry_Compiler
         /// Fixes problems where strings contain code-like text.
         /// After compilation, string literals are re-emplaced.
         /// </summary>
-        public string PreFormat_AliasStringLiterals_Input(ref string source)
+        public void PreFormat_AliasStringLiterals_Input(ref string source)
         {
             Match match;
             strAliasMap = new Dictionary<Regex, string>();
@@ -146,7 +147,31 @@ namespace Mindustry_Compiler
                     match = rxLRS.Match(source);
                 }
             }
-            return source;
+        }
+
+
+        public void PreFormat_SingleLineControl(ref string source)
+        {
+            //Match match;
+
+            //// Remap 'for loop's early ...
+
+
+            //// If, Else If, While
+            //var rxIfElseIfWhileDo = new Regex(@"(^|\n|;)(\w+|\s*)*\b(?<a>if|while\s*\()(?<b>(\n|[^\{;])+;)");
+            //match = rxIfElseIfWhileDo.Match(source);
+            //while (match.Success)
+            //{
+            //    int parenthesisOpen = match.Groups["a"].GetAfterIndex() + 1;
+            //    int parenthesisClose;
+            //    string inner = source.ScanToClosing(parenthesisOpen, out parenthesisClose);
+
+            //    int oneLineStart = parenthesisClose + 1;
+
+
+            //    match = rxIfElseIfWhileDo.Match(source);
+            //}
+
         }
 
     }

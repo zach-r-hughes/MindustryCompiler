@@ -52,13 +52,12 @@ namespace Mindustry_Compiler
         static FunctionInfo mainFunctionInfo => builtInFunctions[0];
         static FunctionInfo sleepFunctionInfo => builtInFunctions[1];
         static FunctionInfo waitFunctionInfo => builtInFunctions[2];
-
+        
 
         public class FunctionInfo
         {
             public string name;
             public int paramCount;
-            public string jumpAlias;
             public List<string> paramNames = new List<string>();
 
             public FunctionInfo(string fnName, int paramCount = -1)
@@ -76,8 +75,13 @@ namespace Mindustry_Compiler
 
                 // Save param names
                 var pnames = paramInner.Split(',');
+                var rxTypenameStrip = new Regex(@"(?<pname>\w+)\s*(\n|$)");
                 for (int i = 0; i < pnames.Length; i++)
+                {
+                    // Remove typenames
+                    pnames[i] = rxTypenameStrip.Match(pnames[i]).GetStr("pname");
                     paramNames.Add(pnames[i].Trim());
+                }
             }
 
             public string Alias { get => "__" + name + "_" + paramCount.ToString() + "_"; }
@@ -207,6 +211,9 @@ namespace Mindustry_Compiler
                             "set",
                             "@counter",
                             "__retadr_"));
+
+
+                        code[1] = fnObj.Alias + ":" + code[1];
                     }
                     // Find next function ...
                     match = rxFunctionDefinition.Match(source);
@@ -278,58 +285,56 @@ namespace Mindustry_Compiler
             if (pvals.Count != fnObj.paramCount)
                 throw new Exception("Error with function parameter count.");
 
-            var oldCode = code;
             var fnCode = new List<string>();
-            code = fnCode;
-
-            // ~~~~~~~ Params ...
-            for (int i = 0; i < fnObj.paramCount; i++)
+            using (var tcr = new TemporaryInstructionRetarget(this, fnCode))
             {
-                // Add 'save old param value'
+
+                // ~~~~~~~ Params ...
+                for (int i = 0; i < fnObj.paramCount; i++)
+                {
+                    // Add 'save old param value'
+                    code.Add(BuildCode(
+                        "set",                          // Op
+                        "__p" + i.ToString() + "__",    // Destination
+                        fnObj.paramNames[i]             // Value
+                        ));
+
+                    // Parse param 'rvals'
+                    pvals[i] = ParseRval(pvals[i]);
+                    code.Add(BuildCode(
+                        "set",                          // Op
+                        fnObj.paramNames[i],            // Destination
+                        pvals[i]                        // Value
+                        ));
+                }
+
+                // ~~~~~~~ Set return address ...
                 code.Add(BuildCode(
-                    "set",                          // Op
-                    "__p" + i.ToString() + "__",    // Destination
-                    fnObj.paramNames[i]             // Value
+                    "op",
+                    "add",                          // Operation
+                    "__retadr_",                    // Destination
+                    "@counter",                     // Operand 1
+                    "1"                             // Operand 2
                     ));
 
-                // Parse param 'rvals'
-                pvals[i] = ParseRval(pvals[i]);
+                // ~~~~~~~ Jump to fn
                 code.Add(BuildCode(
-                    "set",                          // Op
-                    fnObj.paramNames[i],            // Destination
-                    pvals[i]                        // Value
+                    "set",                              // Op
+                    "@counter",                         // Destination
+                    fnObj.Alias                         // Value
                     ));
+
+                // ~~~~~~~ Restore params ...
+                for (int i = 0; i < fnObj.paramCount; i++)
+                {
+                    // Add 'save old param value'
+                    code.Add(BuildCode(
+                        "set",                          // Op
+                        fnObj.paramNames[i],            // Destination
+                        "__p" + i.ToString() + "__"     // Value
+                        ));
+                }
             }
-
-            // ~~~~~~~ Set return address ...
-            code.Add(BuildCode(
-                "op",
-                "add",                          // Operation
-                "__retadr_",                    // Destination
-                "@counter",                     // Operand 1
-                "1"                             // Operand 2
-                ));
-
-            // ~~~~~~~ Jump to fn
-            code.Add(BuildCode(
-                "set",                              // Op
-                "@counter",                         // Destination
-                fnObj.Alias                         // Value
-                ));
-
-            // ~~~~~~~ Restore params ...
-            for (int i = 0; i < fnObj.paramCount; i++)
-            {
-                // Add 'save old param value'
-                code.Add(BuildCode(
-                    "set",                          // Op
-                    fnObj.paramNames[i],            // Destination
-                    "__p" + i.ToString() + "__"     // Value
-                    ));
-            }
-
-
-            code = oldCode;
             return fnCode;
         }
 

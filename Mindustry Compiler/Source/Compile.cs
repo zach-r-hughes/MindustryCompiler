@@ -473,9 +473,6 @@ namespace Mindustry_Compiler
                             "0");                       // Operand 2
                         code.Add(ifStackLastNextIfAlias + ":" + skipElseAsm);
 
-                        //// Create new 'if-next' jump alias
-                        //ifStackLastNextIfAlias = getNewJumpAlias(true);
-
                         stackFrames.Push(new StackFrame(this, code)
                         {
                             EndAction = (self) =>
@@ -630,11 +627,18 @@ namespace Mindustry_Compiler
 
                 case LineClass.Return:
                     {
-                        if (doPrintFlush) code.Add("printflush message1");
-
                         // Return value ?
                         string retv = lineMatch.GetStr("v");
-                        if (retv.Length > 0)
+
+                        // In 'main'? End (reset) ...
+                        if (code == baseFrame.code)
+                        {
+                            if (doPrintFlush) code.Add("printflush message1");
+                            code.Add("end");
+                        }
+
+                        // In function - return value?
+                        else if (retv.Length > 0)
                         {
                             retv = ParseRval(retv);
                             code.Add(BuildCode(
@@ -644,12 +648,9 @@ namespace Mindustry_Compiler
                                 ));
                         }
 
-                        // Jump to start
-                        code.Add(BuildCode(
-                            "set",
-                            "@counter",
-                            "0"
-                            ));
+                        // In function - jump to return
+                        else
+                            code.Add("set @counter __retadr_");
                     }
                     break;
             }

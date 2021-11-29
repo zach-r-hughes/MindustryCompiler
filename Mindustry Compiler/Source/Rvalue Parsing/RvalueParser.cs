@@ -119,7 +119,7 @@ namespace Mindustry_Compiler
 
                     // Get fn info object from text...
                     var fnObj = new FunctionInfo(fnName, inner);
-
+                    string destination;
 
                     // Built in function
                     if (builtInFunctions.Contains(fnObj))
@@ -127,7 +127,7 @@ namespace Mindustry_Compiler
                         if (fnName == "main")
                             throw new Exception("Cannot call main function manually.");
 
-                        string destination = getNewIntermediateName();
+                        destination = getNewIntermediateName();
                         var pvals = inner.SplitByParamCommas();
                         string a = pvals.Count >= 1 ? ParseRval(pvals[0]) : "a";
                         string b = pvals.Count >= 2 ? ParseRval(pvals[1]) : "b";
@@ -140,15 +140,24 @@ namespace Mindustry_Compiler
                             b                       // Operand 2
                             );
                         code.Add(asm);
-                        rval = rval.ReplaceSection(match.Index, nextIndex - match.Index, destination);
-                        curIndex = nextIndex;
                     }
 
                     // Custom user function
                     else
                     {
-                        Console.WriteLine("custom user function call");
+                        destination = getNewIntermediateName();
+                        var fnCode = CreateFunctionCall(fnName, inner);
+                        code.AddRange(fnCode);
+
+                        string setToRetAsm = BuildCode(
+                            "set",                  // Op
+                            destination,            // Destination
+                            retValName              // Value
+                            );
+                        code.Add(setToRetAsm);
                     }
+                    rval = rval.ReplaceSection(match.Index, nextIndex - match.Index, destination);
+                    curIndex = nextIndex;
                 }
                 match = rxFunctionRval.Match(rval);
             }
