@@ -9,14 +9,14 @@
 > @thorium
 > @graphite
 > @metaglass
-> @spore pod
+> @spore-pod
 > @silicon
 > @plastanium
-> @phase fabric
+> @phase-fabric
 > @surge alloy
-> @blast compound
+> @blast-compound
 > @pyratite
-> 
+
 ### Liquids
 > @water
 > @oil
