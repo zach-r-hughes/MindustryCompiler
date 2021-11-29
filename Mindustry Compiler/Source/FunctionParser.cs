@@ -248,11 +248,8 @@ namespace Mindustry_Compiler
             // Split params
             var pvals = paramsInner.SplitByParamCommas();
 
-            // Get function obj ref ...
-            var fnObj = FindFunctionInfo(fnName, pvals.Count);
-
-
             // ~~~~~~~~ Built-in function?
+            var fnObj = new FunctionInfo(fnName, pvals.Count);
             if (builtInFunctions.Contains(fnObj))
             {
                 if (fnName != "sleep")
@@ -272,9 +269,9 @@ namespace Mindustry_Compiler
             }
 
 
-            
+            // Get function obj ref ...
+            fnObj = FindFunctionInfo(fnName, pvals.Count);
 
-            
             if (fnObj == null)
                 throw new Exception("Could not find function def: " + fnName + "(" + pvals.Count + ")");
 
