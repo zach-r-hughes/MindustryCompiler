@@ -4,6 +4,7 @@
 # Mindustry Compiler
 
 Mindustry Compiler is an open-source C-style compiler for the game Mindustry. You can write basic C-style programs in your favorite code editor, and the program will compile it into assembly-like language that is compatible for the logic processors in game.
+
 ![Mindustry Compiler screenshot](https://i.imgur.com/5J60pUm.png)
 
 To use it, create a `.cpp`, `.c`, or `.txt` file in your text editor of choice. Then, click the `Open` button at the top of the Mindustry compiler.
