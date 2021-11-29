@@ -205,7 +205,10 @@ namespace Mindustry_Compiler
             {
                 if (!isMindustryFocused && originalClipboardData != null)
                 {
-                    Clipboard.SetDataObject(originalClipboardData);
+                    // Do not overwrite the clipbaord if the clipboard data has changed ...
+                    string asm = txtAsm.Text.Replace("\r", "");
+                    if (Clipboard.GetText() == asm)
+                        Clipboard.SetDataObject(originalClipboardData);
                 }
             }
 
