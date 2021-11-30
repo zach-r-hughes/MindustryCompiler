@@ -524,8 +524,8 @@ namespace Mindustry_Compiler
                             compRval = ParseBool(comp);
                             jumpEndAsm = BuildCode(
                                 "jump",         // Op
-                                jumpEndAlias,      // Line num
-                                "equal",     // Comp type
+                                jumpEndAlias,   // Line num
+                                "notEqual",     // Comp type
                                 compRval,       // Condition
                                 "true"          // True
                                 );
@@ -563,7 +563,7 @@ namespace Mindustry_Compiler
                                 string jumpBodyAsm = BuildCode(
                                 "jump",         // Op
                                 jumpBodyAlias,  // Line num
-                                "notEqual",     // Comp type
+                                "equal",        // Comp type
                                 compRval,       // Condition
                                 "true"          // True
                                 );
