@@ -187,7 +187,13 @@ namespace Mindustry_Compiler
         /// Matches a for loop.
         /// Groups: 'a', 'b', 'c'
         /// </summary>
-        readonly Regex rxForLoop = new Regex(@"for\s*\((?<a>[^;]+);(?<b>[^;]+);(?<c>.*)\)");
+        readonly Regex rxForLoop = new Regex(@"\bfor\s*\((?<a>[^;]+);(?<b>[^;]+);(?<c>.*)\)");
+
+        /// <summary>
+        /// Matches a for loop.
+        /// Groups: 'a', 'b', 'c'
+        /// </summary>
+        readonly Regex rxWhile = new Regex(@"\bwhile\s*\((?<a>.*)\)\s*(\n|$)");
 
         /// <summary>
         /// Matches a line num reference.
@@ -298,6 +304,9 @@ namespace Mindustry_Compiler
 
             lineMatch = rxForLoop.Match(code);
             if (lineMatch.Success) return LineClass.ForLoop;
+
+            lineMatch = rxWhile.Match(code);
+            if (lineMatch.Success) return LineClass.WhileLoop;
 
             lineMatch = rxIncrement.Match(code);
             if (lineMatch.Success) return LineClass.Increment;

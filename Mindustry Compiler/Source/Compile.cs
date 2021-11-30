@@ -581,6 +581,68 @@ namespace Mindustry_Compiler
                     break;
 
 
+                case LineClass.WhileLoop:
+                    {
+                        // Process assign (as separate line)
+                        string comp = lineMatch.GetStr("a");
+
+
+                        // ~~~~~~ A: comparison/conditional jump instructions
+                        var compInstructions = new List<string>();
+                        string jumpEndAsm;
+                        string compRval;
+                        string jumpEndAlias = getNewJumpAlias(true);
+                        string jumpBodyAlias = getNewJumpAlias();
+
+                        using (var tir = new TemporaryInstructionRetarget(this, compInstructions))
+                        {
+                            compRval = ParseBool(comp);
+                            jumpEndAsm = BuildCode(
+                                "jump",         // Op
+                                jumpEndAlias,   // Line num
+                                "notEqual",     // Comp type
+                                compRval,       // Condition
+                                "true"          // True
+                                );
+                        }
+
+                        // Initial jump/skip codeblock (condition == false)?
+                        code.AddRange(compInstructions);
+                        code.Add(jumpEndAsm);
+
+
+                        // Body + go to start
+                        string initJump = getNewJumpAlias();
+                        stackFrames.Push(new StackFrame(this, code)
+                        {
+                            EndAction_PreDumpToParent = (self) =>
+                            {
+                                if (self.code.Count > 0)
+                                    self.code[0] = jumpBodyAlias + ":" + self.code[0];
+                            },
+
+                            EndAction = (self) =>
+                            {
+                                string jumpBodyAsm = BuildCode(
+                                "jump",         // Op
+                                jumpBodyAlias,  // Line num
+                                "equal",        // Comp type
+                                compRval,       // Condition
+                                "true"          // True
+                                );
+
+
+                                // End of loop (next -> jump to body again?)
+                                self.parentCode.AddRange(compInstructions);
+                                self.parentCode.Add(jumpEndAlias + ":" + jumpBodyAsm);
+                            },
+                        });
+
+                        isNextStackLinked = true;
+                    }
+                    break;
+
+
                 case LineClass.GoTo:
                     {
                         string label = lineMatch.GetStr("label");

@@ -8,7 +8,6 @@ C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\bin\Release\
 C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\bin\Release\System.Text.Encodings.Web.dll
 C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\bin\Release\System.Threading.Tasks.Extensions.dll
 C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\bin\Release\Microsoft.Bcl.AsyncInterfaces.dll
-C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\obj\Release\Mindustry Compiler.csproj.AssemblyReference.cache
 C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\obj\Release\Mindustry Compiler.exe.config
 C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\obj\Release\Mindustry_Compiler.NativeInterop.User32.resources
 C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\obj\Release\Mindustry_Compiler.MindustryCompilerForm.resources
