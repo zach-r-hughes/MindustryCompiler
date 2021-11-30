@@ -152,26 +152,73 @@ namespace Mindustry_Compiler
 
         public void PreFormat_SingleLineControl(ref string source)
         {
-            //Match match;
+            Match match;
 
-            //// Remap 'for loop's early ...
+            // ~~~~~~~~~~ Condition one-liners (if, else if, while)
+            // Groups: 'type', 'rest'
+            var rxIfElseIfWhileDo = new Regex(@"\b(?<type>if|else\s*if|while)\s*(?<rest>\((\n|[^\{;])+;)");
+            match = rxIfElseIfWhileDo.Match(source);
+            while (match.Success)
+            {
+                string type = match.GetStr("type");
+                string cond;
+                var restGroup = match.Groups["rest"];
+                string rest = restGroup.Value;
+
+                // Scan one-liner condition/code ...
+                int parenOpen = 0;
+                int parenClose;
+                cond = "(" + rest.ScanToClosing(parenOpen, out parenClose, '(', ')').Trim() + ")";
+                string oneLiner = rest.Substring(parenClose + 1).Trim();
 
 
-            //// If, Else If, While
-            //var rxIfElseIfWhileDo = new Regex(@"(^|\n|;)(\w+|\s*)*\b(?<a>if|while\s*\()(?<b>(\n|[^\{;])+;)");
-            //match = rxIfElseIfWhileDo.Match(source);
-            //while (match.Success)
-            //{
-            //    int parenthesisOpen = match.Groups["a"].GetAfterIndex() + 1;
-            //    int parenthesisClose;
-            //    string inner = source.ScanToClosing(parenthesisOpen, out parenthesisClose);
-
-            //    int oneLineStart = parenthesisClose + 1;
+                // Now we have the branch-type, condition, and code. Rebuild...
+                string newSource = type + cond + "\n{\n\t" + oneLiner + "\n}\n";
+                source = source.ReplaceSection(match.Index, restGroup.Index + restGroup.Length - match.Index, newSource);
+                match = rxIfElseIfWhileDo.Match(source);
+            }
 
 
-            //    match = rxIfElseIfWhileDo.Match(source);
-            //}
+            // ~~~~~~~~~~ No-condition one-liners (else, do-while)
+            // Groups: 'type', 'rest'
+            var rxElse = new Regex(@"\b(?<type>else|do)\s*(?<rest>(\n|[^\{;])+;)");
+            match = rxElse.Match(source);
+            while (match.Success)
+            {
+                string type = match.GetStr("type");
+                var restGroup = match.Groups["rest"];
+                string rest = restGroup.Value;
 
+                // Now we have the branch-type, condition, and code. Rebuild...
+                string newSource = type + "\n{\n\t" + rest + "\n}\n";
+                source = source.ReplaceSection(match.Index, restGroup.Index + restGroup.Length - match.Index, newSource);
+                match = rxElse.Match(source);
+            }
+
+
+            // ~~~~~~~~~~ For one-liner
+            // Groups: 'type', 'rest'
+            var rxFor = new Regex(@"\b(?<type>for)\s*(?<rest>\([^{;]*;[^{;]*;[^{;]+);");
+            match = rxFor.Match(source);
+            while (match.Success)
+            {
+                string type = match.GetStr("type");
+                string cond;
+                var restGroup = match.Groups["rest"];
+                string rest = restGroup.Value;
+
+                // Scan one-liner condition/code ...
+                int parenOpen = 0;
+                int parenClose;
+                cond = "(" + rest.ScanToClosing(parenOpen, out parenClose, '(', ')').Trim() + ")";
+                string oneLiner = rest.Substring(parenClose + 1).Trim();
+
+
+                // Now we have the branch-type, condition, and code. Rebuild...
+                string newSource = type + cond + "\n{\n\t" + oneLiner + "\n}\n";
+                source = source.ReplaceSection(match.Index, restGroup.Index + restGroup.Length - match.Index, newSource);
+                match = rxIfElseIfWhileDo.Match(source);
+            }
         }
 
     }
