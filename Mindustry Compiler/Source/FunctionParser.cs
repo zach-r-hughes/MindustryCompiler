@@ -134,6 +134,10 @@ namespace Mindustry_Compiler
             // Dump fn code into base frame ...
             baseFrame.code.AddRange(functionCode);
 
+            // No main function? Add 'end'...
+            if (!hasMainFunction)
+                baseFrame.code.Add("end");
+
             // Function 'sleep' was called? prepend asm ...
             if (sleepFunctionCalled)
                 AppendSleepFunction(code);
