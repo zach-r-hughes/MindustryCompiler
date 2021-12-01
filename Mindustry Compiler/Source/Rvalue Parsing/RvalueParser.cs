@@ -27,12 +27,29 @@ namespace Mindustry_Compiler
             new Regex(@"@?surge-alloy"),
         };
 
+        /// <summary>
+        /// Returns true if the expression is a numeric constant
+        /// </summary>
+        public bool IsRvalNumericConstant(string rval) =>
+            Regex.IsMatch(rval.Trim(), @"^-?[0-9.]+$");
+
+        /// <summary>
+        /// Returns true if the expression is a single variable name
+        /// </summary>
+        /// <param name="rval"></param>
+        /// <returns></returns>
+        public bool IsRvalSingleVariable(string rval) =>
+            Regex.IsMatch(rval.Trim(), @"^\w+$");
+
+
         //==============================================================================
         /// <summary>
         /// Takes in an R-value string, and returns a variable name holding its output value
         /// </summary>
         public string ParseRval(string rval)
         {
+            if (IsRvalNumericConstant(rval) || IsRvalSingleVariable(rval))
+                return rval;
             rval = ParseRval_BoolLogic(rval);
             rval = ParseRval_DotProperty(rval);
             rval = ParseRval_FunctionCalls(rval);

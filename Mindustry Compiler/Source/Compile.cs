@@ -666,32 +666,43 @@ namespace Mindustry_Compiler
                             break;
                         }
 
-                        // Store current time
-                        code.Add(BuildCode(
-                            "set", 
-                            "__sleep_end_",
-                            "@time"
-                            ));
 
-                        // Get num seconds, mult by 1000
-                        string rv = ParseRval(param);
-                        string pval = getNewIntermediateName();
-                        code.Add(BuildCode(
-                            "op", 
-                            "mul",          // Op
-                            pval,           // Destination
-                            rv,             // Operand 1
-                            "1000"          // Operand 2
-                            ));
+                        // Sleep a constant amount of time
+                        if (IsRvalNumericConstant(param))
+                        {
+                            // Convert const to ms, set sleep end
+                            int ms = (int)Math.Round(double.Parse(param) * 1000.0);
+                            code.Add(BuildCode(
+                                "op",
+                                "add",              // Op
+                                "__sleep_end_",     // Destination
+                                "@time",            // Operand 1
+                                ms.ToString()       // Operand 2
+                                ));
+                        }
+                        else
+                        {
 
-                        // Add pval to sleep end time
-                        code.Add(BuildCode(
-                            "op",
-                            "add",                  // Op
-                            "__sleep_end_",         // Destination
-                            "__sleep_end_",         // Operand 1
-                            pval                // Operand 2
-                            ));
+                            // Get num seconds, mult by 1000
+                            string rv = ParseRval(param);
+                            string pval = getNewIntermediateName();
+                            code.Add(BuildCode(
+                                "op",
+                                "mul",          // Op
+                                pval,           // Destination
+                                rv,             // Operand 1
+                                "1000"          // Operand 2
+                                ));
+
+                            // Add pval to sleep end time
+                            code.Add(BuildCode(
+                                "op",
+                                "add",                  // Op
+                                "__sleep_end_",         // Destination
+                                "__sleep_end_",         // Operand 1
+                                pval                // Operand 2
+                                ));
+                        }
 
                         // Spin until elapsed
                         string sleepJumpAlias = getNewJumpAlias();
