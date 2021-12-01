@@ -18,7 +18,6 @@ namespace Mindustry_Compiler
         Dictionary<string, FunctionInfo> functionMap;
         List<string> functionCode;
         bool hasMainFunction = false;
-        bool sleepFunctionCalled = false;
 
         readonly string retValName = "__retv_";
 
@@ -120,7 +119,6 @@ namespace Mindustry_Compiler
         void InitializeFunctions(ref string source)
         {
             hasMainFunction = false;
-            sleepFunctionCalled = false;
             functionMap = new Dictionary<string, FunctionInfo>();
             functionCode = new List<string>();
             ParseFunctions(ref source);
@@ -137,10 +135,6 @@ namespace Mindustry_Compiler
             // No main function? Add 'end'...
             if (!hasMainFunction)
                 baseFrame.code.Add("end");
-
-            // Function 'sleep' was called? prepend asm ...
-            if (sleepFunctionCalled)
-                AppendSleepFunction(code);
         }
 
         FunctionInfo FindFunctionInfo(string fnName, int paramCount)
@@ -263,20 +257,11 @@ namespace Mindustry_Compiler
             var fnObj = new FunctionInfo(fnName, pvals.Count);
             if (builtInFunctions.Contains(fnObj))
             {
-                if (fnName != "sleep")
-                {
-                    code.Add(BuildCode(
-                    "op",               // Op
-                    fnName,             // Function
-                    ""
-                    ));
-                }
-
-                // Is sleep function? Add 'sleep()' asm later ...
-                bool wasSleepCalled = sleepFunctionCalled;
-                sleepFunctionCalled |= fnName == "sleep" && pvals.Count == 1;
-                if (sleepFunctionCalled && !wasSleepCalled)
-                    functionMap.Add(fnName, sleepFunctionInfo);
+                code.Add(BuildCode(
+                "op",               // Op
+                fnName,             // Function
+                ""
+                ));
             }
 
 
@@ -340,18 +325,6 @@ namespace Mindustry_Compiler
                 }
             }
             return fnCode;
-        }
-
-        /// <summary>
-        /// Return the source for the sleep function
-        /// </summary>
-        void AppendSleepFunction(List<string> code)
-        {
-            code.Add("print ==================================== ");
-            code.Add(sleepFunctionInfo.Alias + ":op mul seconds seconds 1000");
-            code.Add("op add seconds @time seconds");
-            code.Add("__sleep_loop_:jump __sleep_loop_ greaterThan seconds @time");
-            code.Add("set @counter __retadr_");
         }
     }
 }

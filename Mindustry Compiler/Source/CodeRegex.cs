@@ -38,6 +38,7 @@ namespace Mindustry_Compiler
             ElseIf,
             Else,
             FunctionCall,
+            Sleep,
             Wait,
             Invalid,
         }
@@ -247,10 +248,16 @@ namespace Mindustry_Compiler
         readonly Regex rxFunctionCall = new Regex(@"^\s*(?<fname>\w+)\s*\((?<params>.*)\)\s*;?\s*$");
 
         /// <summary>
+        /// Matches a 'sleep for seconds' function call.
+        /// Groups: 'param'
+        /// </summary>
+        readonly Regex rxSleepFunction = new Regex(@"^\b*sleep\s*\(\s*(?<param>.*)\s*\)\s*;?\s*$");
+
+        /// <summary>
         /// Matches a 'wait for condition' function call.
         /// Groups: 'cond'
         /// </summary>
-        readonly Regex rxWaitFunction = new Regex(@"^\s*wait\s*\(\s*(?<cond>.*)\s*\)\s*;?\s*$");
+        readonly Regex rxWaitFunction = new Regex(@"^\b*wait\s*\(\s*(?<cond>.*)\s*\)\s*;?\s*$");
 
         /// <summary>
         /// Matches a function definition
@@ -289,6 +296,9 @@ namespace Mindustry_Compiler
 
             lineMatch = rxPrint.Match(code);
             if (lineMatch.Success) return LineClass.Print;
+
+            lineMatch = rxSleepFunction.Match(code);
+            if (lineMatch.Success) return LineClass.Sleep;
 
             lineMatch = rxWaitFunction.Match(code);
             if (lineMatch.Success) return LineClass.Wait;

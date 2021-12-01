@@ -656,6 +656,57 @@ namespace Mindustry_Compiler
                     break;
 
 
+                case LineClass.Sleep:
+                    {
+                        string param = lineMatch.GetStr("param").Trim();
+                        if (param.Length == 0 || param.Trim() == "0")
+                        {
+                            // Sleep 1 tick (nop)
+                            code.Add("set __nop 0");
+                            break;
+                        }
+
+                        // Store current time
+                        code.Add(BuildCode(
+                            "set", 
+                            "__sleep_end_",
+                            "@time"
+                            ));
+
+                        // Get num seconds, mult by 1000
+                        string rv = ParseRval(param);
+                        string pval = getNewIntermediateName();
+                        code.Add(BuildCode(
+                            "op", 
+                            "mul",          // Op
+                            pval,           // Destination
+                            rv,             // Operand 1
+                            "1000"          // Operand 2
+                            ));
+
+                        // Add pval to sleep end time
+                        code.Add(BuildCode(
+                            "op",
+                            "add",                  // Op
+                            "__sleep_end_",         // Destination
+                            "__sleep_end_",         // Operand 1
+                            pval                // Operand 2
+                            ));
+
+                        // Spin until elapsed
+                        string sleepJumpAlias = getNewJumpAlias();
+                        code.Add(sleepJumpAlias + ":" + 
+                            BuildCode(
+                                "jump",
+                                sleepJumpAlias,
+                                "greaterThan",
+                                "__sleep_end_",
+                                "@time")
+                            );
+                    }
+                    break;
+
+
                 case LineClass.Wait:
                     {
                         string cond = lineMatch.GetStr("cond").Trim();

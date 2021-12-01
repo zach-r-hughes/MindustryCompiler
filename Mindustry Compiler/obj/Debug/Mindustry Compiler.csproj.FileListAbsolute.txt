@@ -37,3 +37,4 @@ C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\obj\Debug\Mi
 C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\obj\Debug\Mindustry Compiler.csproj.CopyComplete
 C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\obj\Debug\Mindustry Compiler.exe
 C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\obj\Debug\Mindustry Compiler.pdb
+C:\Users\Zach\Documents\GitHub\MindustryCompiler\Mindustry Compiler\obj\Debug\Mindustry Compiler.csproj.AssemblyReference.cache
