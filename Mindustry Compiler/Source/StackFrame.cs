@@ -11,6 +11,7 @@ namespace Mindustry_Compiler
 
         public void InitalizeStackFrames()
         {
+            lastLineClass = "Initialize Frames";
             baseFrame = new StackFrame(this, null);
             stackFrames = new Stack<StackFrame>();
             stackFrames.Push(baseFrame);

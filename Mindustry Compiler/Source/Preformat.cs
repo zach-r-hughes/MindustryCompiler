@@ -64,6 +64,8 @@ namespace Mindustry_Compiler
         /// </summary>
         void PreFormat_StripComments(ref string source)
         {
+            lastLineClass = "Strip Comments";
+
             // Comments (single-line)
             source = Regex.Replace(source, @"\/\/.*(\n|$)", e => "").Trim();
 
@@ -73,6 +75,8 @@ namespace Mindustry_Compiler
 
         void Preformat_IncDec(ref string source)
         {
+            lastLineClass = "Parse Increments/Decrements";
+
             // Fix 'cell' increment/decrement ...
             var rxMemIncDec = new Regex(@"\b(?<a>(?!\b=\b).*)(?<b>\+\+|--)\s*;?\s*(\n|$)");
             source = rxMemIncDec.Replace(source, e => e.GetStr("a") + " " + e.GetStr("b").Substring(0, 1) + "= 1; \n");

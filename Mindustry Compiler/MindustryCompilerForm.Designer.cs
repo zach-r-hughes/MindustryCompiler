@@ -32,7 +32,6 @@ namespace Mindustry_Compiler
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MindustryCompilerForm));
             this.panel1 = new System.Windows.Forms.Panel();
-            this.chkCompileOnSaveSource = new System.Windows.Forms.CheckBox();
             this.chkCompileOnFocus = new System.Windows.Forms.CheckBox();
             this.panel7 = new System.Windows.Forms.Panel();
             this.btnCompile = new System.Windows.Forms.Button();
@@ -61,28 +60,14 @@ namespace Mindustry_Compiler
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.Transparent;
-            this.panel1.Controls.Add(this.chkCompileOnSaveSource);
             this.panel1.Controls.Add(this.chkCompileOnFocus);
             this.panel1.Controls.Add(this.panel7);
             this.panel1.Controls.Add(this.panel4);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(516, 77);
+            this.panel1.Size = new System.Drawing.Size(486, 61);
             this.panel1.TabIndex = 0;
-            // 
-            // chkCompileOnSaveSource
-            // 
-            this.chkCompileOnSaveSource.AutoSize = true;
-            this.chkCompileOnSaveSource.Checked = true;
-            this.chkCompileOnSaveSource.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkCompileOnSaveSource.ForeColor = System.Drawing.Color.Black;
-            this.chkCompileOnSaveSource.Location = new System.Drawing.Point(12, 54);
-            this.chkCompileOnSaveSource.Name = "chkCompileOnSaveSource";
-            this.chkCompileOnSaveSource.Size = new System.Drawing.Size(158, 17);
-            this.chkCompileOnSaveSource.TabIndex = 9;
-            this.chkCompileOnSaveSource.Text = "Compile on source changed";
-            this.chkCompileOnSaveSource.UseVisualStyleBackColor = true;
             // 
             // chkCompileOnFocus
             // 
@@ -92,25 +77,25 @@ namespace Mindustry_Compiler
             this.chkCompileOnFocus.ForeColor = System.Drawing.Color.Black;
             this.chkCompileOnFocus.Location = new System.Drawing.Point(12, 35);
             this.chkCompileOnFocus.Name = "chkCompileOnFocus";
-            this.chkCompileOnFocus.Size = new System.Drawing.Size(148, 17);
+            this.chkCompileOnFocus.Size = new System.Drawing.Size(128, 17);
             this.chkCompileOnFocus.TabIndex = 3;
-            this.chkCompileOnFocus.Text = "Compile on game focused";
+            this.chkCompileOnFocus.Text = "Copy on Game Focus";
             this.chkCompileOnFocus.UseVisualStyleBackColor = true;
             // 
             // panel7
             // 
             this.panel7.Controls.Add(this.btnCompile);
             this.panel7.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel7.Location = new System.Drawing.Point(247, 28);
+            this.panel7.Location = new System.Drawing.Point(381, 28);
             this.panel7.Name = "panel7";
-            this.panel7.Size = new System.Drawing.Size(269, 49);
+            this.panel7.Size = new System.Drawing.Size(105, 33);
             this.panel7.TabIndex = 8;
             // 
             // btnCompile
             // 
-            this.btnCompile.Location = new System.Drawing.Point(155, 6);
+            this.btnCompile.Location = new System.Drawing.Point(5, 3);
             this.btnCompile.Name = "btnCompile";
-            this.btnCompile.Size = new System.Drawing.Size(101, 23);
+            this.btnCompile.Size = new System.Drawing.Size(94, 23);
             this.btnCompile.TabIndex = 4;
             this.btnCompile.Text = "Compile Now";
             this.btnCompile.UseVisualStyleBackColor = true;
@@ -125,7 +110,7 @@ namespace Mindustry_Compiler
             this.panel4.Location = new System.Drawing.Point(0, 0);
             this.panel4.Name = "panel4";
             this.panel4.Padding = new System.Windows.Forms.Padding(0, 4, 8, 2);
-            this.panel4.Size = new System.Drawing.Size(516, 28);
+            this.panel4.Size = new System.Drawing.Size(486, 28);
             this.panel4.TabIndex = 7;
             // 
             // txtPath
@@ -133,7 +118,7 @@ namespace Mindustry_Compiler
             this.txtPath.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.txtPath.Location = new System.Drawing.Point(10, 6);
             this.txtPath.Name = "txtPath";
-            this.txtPath.Size = new System.Drawing.Size(389, 20);
+            this.txtPath.Size = new System.Drawing.Size(371, 20);
             this.txtPath.TabIndex = 6;
             // 
             // panel8
@@ -149,15 +134,15 @@ namespace Mindustry_Compiler
             this.panel6.Controls.Add(this.button1);
             this.panel6.Controls.Add(this.btnEditSource);
             this.panel6.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel6.Location = new System.Drawing.Point(399, 4);
+            this.panel6.Location = new System.Drawing.Point(381, 4);
             this.panel6.Name = "panel6";
-            this.panel6.Size = new System.Drawing.Size(109, 22);
+            this.panel6.Size = new System.Drawing.Size(97, 22);
             this.panel6.TabIndex = 0;
             // 
             // button1
             // 
             this.button1.BackColor = System.Drawing.Color.Transparent;
-            this.button1.Location = new System.Drawing.Point(40, -1);
+            this.button1.Location = new System.Drawing.Point(39, -1);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(60, 23);
             this.button1.TabIndex = 6;
@@ -169,7 +154,7 @@ namespace Mindustry_Compiler
             // 
             this.btnEditSource.BackgroundImage = global::Mindustry_Compiler.Properties.Resources.edit_icon1;
             this.btnEditSource.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.btnEditSource.Location = new System.Drawing.Point(4, -7);
+            this.btnEditSource.Location = new System.Drawing.Point(5, -6);
             this.btnEditSource.Margin = new System.Windows.Forms.Padding(0);
             this.btnEditSource.Name = "btnEditSource";
             this.btnEditSource.Size = new System.Drawing.Size(32, 32);
@@ -183,9 +168,9 @@ namespace Mindustry_Compiler
             this.pnlCompilerMsg.Controls.Add(this.txtCompileMsg);
             this.pnlCompilerMsg.Controls.Add(this.pnlMsgResize);
             this.pnlCompilerMsg.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlCompilerMsg.Location = new System.Drawing.Point(10, 552);
+            this.pnlCompilerMsg.Location = new System.Drawing.Point(10, 559);
             this.pnlCompilerMsg.Name = "pnlCompilerMsg";
-            this.pnlCompilerMsg.Size = new System.Drawing.Size(506, 177);
+            this.pnlCompilerMsg.Size = new System.Drawing.Size(476, 177);
             this.pnlCompilerMsg.TabIndex = 2;
             // 
             // txtCompileMsg
@@ -197,9 +182,10 @@ namespace Mindustry_Compiler
             this.txtCompileMsg.Location = new System.Drawing.Point(0, 6);
             this.txtCompileMsg.Multiline = true;
             this.txtCompileMsg.Name = "txtCompileMsg";
-            this.txtCompileMsg.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtCompileMsg.Size = new System.Drawing.Size(506, 171);
+            this.txtCompileMsg.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.txtCompileMsg.Size = new System.Drawing.Size(476, 171);
             this.txtCompileMsg.TabIndex = 0;
+            this.txtCompileMsg.WordWrap = false;
             // 
             // pnlMsgResize
             // 
@@ -208,7 +194,7 @@ namespace Mindustry_Compiler
             this.pnlMsgResize.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlMsgResize.Location = new System.Drawing.Point(0, 0);
             this.pnlMsgResize.Name = "pnlMsgResize";
-            this.pnlMsgResize.Size = new System.Drawing.Size(506, 6);
+            this.pnlMsgResize.Size = new System.Drawing.Size(476, 6);
             this.pnlMsgResize.TabIndex = 1;
             this.pnlMsgResize.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pnlMsgResize_MouseMove);
             // 
@@ -216,18 +202,18 @@ namespace Mindustry_Compiler
             // 
             this.panel5.BackColor = System.Drawing.Color.Transparent;
             this.panel5.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel5.Location = new System.Drawing.Point(516, 0);
+            this.panel5.Location = new System.Drawing.Point(486, 0);
             this.panel5.Name = "panel5";
-            this.panel5.Size = new System.Drawing.Size(10, 729);
+            this.panel5.Size = new System.Drawing.Size(10, 736);
             this.panel5.TabIndex = 6;
             // 
             // panel3
             // 
             this.panel3.BackColor = System.Drawing.Color.Transparent;
             this.panel3.Dock = System.Windows.Forms.DockStyle.Left;
-            this.panel3.Location = new System.Drawing.Point(0, 77);
+            this.panel3.Location = new System.Drawing.Point(0, 61);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(10, 652);
+            this.panel3.Size = new System.Drawing.Size(10, 675);
             this.panel3.TabIndex = 9;
             // 
             // txtAsm
@@ -237,11 +223,11 @@ namespace Mindustry_Compiler
             this.txtAsm.Font = new System.Drawing.Font("Consolas", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtAsm.ForeColor = System.Drawing.SystemColors.WindowFrame;
             this.txtAsm.HideSelection = false;
-            this.txtAsm.Location = new System.Drawing.Point(10, 77);
+            this.txtAsm.Location = new System.Drawing.Point(10, 61);
             this.txtAsm.Multiline = true;
             this.txtAsm.Name = "txtAsm";
             this.txtAsm.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtAsm.Size = new System.Drawing.Size(506, 475);
+            this.txtAsm.Size = new System.Drawing.Size(476, 498);
             this.txtAsm.TabIndex = 10;
             this.txtAsm.WordWrap = false;
             this.txtAsm.MouseDown += new System.Windows.Forms.MouseEventHandler(this.txtAsm_MouseDown);
@@ -263,7 +249,7 @@ namespace Mindustry_Compiler
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(526, 729);
+            this.ClientSize = new System.Drawing.Size(496, 736);
             this.Controls.Add(this.txtAsm);
             this.Controls.Add(this.pnlCompilerMsg);
             this.Controls.Add(this.panel3);
@@ -308,7 +294,6 @@ namespace Mindustry_Compiler
         private System.Windows.Forms.TextBox txtCompileMsg;
         private System.Windows.Forms.Panel pnlMsgResize;
         private System.Windows.Forms.Button btnEditSource;
-        public System.Windows.Forms.CheckBox chkCompileOnSaveSource;
     }
 }
 

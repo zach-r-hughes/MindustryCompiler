@@ -6,7 +6,6 @@ namespace Mindustry_Compiler
     {
         public void InitializeAliases()
         {
-            
             jumpAliasIndex = 0;
             intermediateValueIndex = 0;
         }

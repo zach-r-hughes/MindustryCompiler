@@ -85,7 +85,6 @@ namespace Mindustry_Compiler
             }
 
             Properties.Settings.Default.SourcePath = txtPath.Text;
-            Properties.Settings.Default.CompileOnSave = chkCompileOnSaveSource.Checked;
             Properties.Settings.Default.CompileOnFocus = chkCompileOnFocus.Checked;
             Properties.Settings.Default.Save();
         }
@@ -115,7 +114,6 @@ namespace Mindustry_Compiler
 
             // ~~~~~~~~ Restore controls (path, compile checkboxes)
             SourcePath = Properties.Settings.Default.SourcePath;
-            chkCompileOnSaveSource.Checked = Properties.Settings.Default.CompileOnSave;
             chkCompileOnFocus.Checked = Properties.Settings.Default.CompileOnFocus;
             CompileFromSourceFile();
 
@@ -166,8 +164,11 @@ namespace Mindustry_Compiler
         /// </summary>
         private void fswSource_Changed(object sender, FileSystemEventArgs e)
         {
-            if (e.ChangeType != WatcherChangeTypes.Deleted && chkCompileOnSaveSource.Checked)
-                CompileToClipboard();
+            if (e.ChangeType != WatcherChangeTypes.Deleted)
+            {
+                // Compile into 'asm' window ..
+                CompileFromSourceFile();
+            }
         }
 
 

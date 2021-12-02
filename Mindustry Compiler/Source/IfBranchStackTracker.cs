@@ -23,6 +23,7 @@ namespace Mindustry_Compiler
         /// </summary>
         public void InitializeIfStack()
         {
+            lastLineClass = "Initialize If Stack";
             ifStackDepth = 0;
             ifStackEndIfAliasIndex = 0;
             ifStackLastNextIfAlias = "";

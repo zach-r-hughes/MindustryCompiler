@@ -118,10 +118,12 @@ namespace Mindustry_Compiler
 
         void InitializeFunctions(ref string source)
         {
+            lastCode = "Initialize Functions";
             hasMainFunction = false;
             functionMap = new Dictionary<string, FunctionInfo>();
             functionCode = new List<string>();
             ParseFunctions(ref source);
+            FixEmptyJumpAliasLines(ref source);
         }
 
         /// <summary>
@@ -129,6 +131,8 @@ namespace Mindustry_Compiler
         /// </summary>
         void FinalizeFunctions()
         {
+            lastCode = "Finalize Functions";
+
             // Dump fn code into base frame ...
             baseFrame.code.AddRange(functionCode);
 
@@ -224,6 +228,8 @@ namespace Mindustry_Compiler
         /// </summary>
         void ParseMainFunction(Match match, ref string source)
         {
+            lastCode = "Parse Main Function";
+
             // ~~~~~~ Move 'main()' last
             hasMainFunction = true;
 
@@ -325,6 +331,19 @@ namespace Mindustry_Compiler
                 }
             }
             return fnCode;
+        }
+
+
+        void FixEmptyJumpAliasLines(ref string source)
+        {
+            var rxEmptyJumpAlias = new Regex(@"(^|\n)(?<lbls>\w+\s*:\s*)\s*($|\n)");
+            var match = rxEmptyJumpAlias.Match(source);
+            while(match.Success)
+            {
+                string fixedSource = "\n" + match.GetStr("lbls");
+                source = source.ReplaceMatch(match, fixedSource);
+                match = rxEmptyJumpAlias.Match(source);
+            }
         }
     }
 }

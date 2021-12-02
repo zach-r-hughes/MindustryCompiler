@@ -13,7 +13,7 @@ namespace Mindustry_Compiler
     {
         int compileLineIndex = 0;
         string lastLineClass = "None";
-        string lastPart = "None";
+        string lastCode = "None";
         bool isNextStackLinked = false;
 
 
@@ -35,7 +35,7 @@ namespace Mindustry_Compiler
 
                 // ~~~~~~ Create base program frame, and stack ...
                 compileLineIndex = -1;
-                lastPart = "Initialize";
+                lastLineClass = "Preformat Code";
                 PreFormatSource(ref source);
                 InitializeAliases();
                 InitalizeStackFrames();
@@ -50,6 +50,7 @@ namespace Mindustry_Compiler
                 for (int i = 0; i < lines.Count; i++)
                 {
                     lines[i] = lines[i].Trim();
+                    lastCode = lines[i];
                     compileLineIndex = i;
 
 
@@ -82,13 +83,14 @@ namespace Mindustry_Compiler
             {
                 var err = new StringBuilder();
                 err.AppendLine("Compilation Error:")
-                    .Append("  Line# ").Append(compileLineIndex).Append(":  ").Append(lastPart)
-                    .Append("  Parse Type: ").Append(lastLineClass).Append("\n\n")
+                    .Append("  Line# ").Append(compileLineIndex).Append(": \"").Append(lastCode).Append("\"\n")
+                    .Append("  Class:   ").Append(lastLineClass).Append("\n")
+                    .Append("\n")
                     .Append(e.Message).Append("\n\n")
                     .Append(e.StackTrace);
 
                 txtAsm.Text = "";
-                txtCompileMsg.Text = err.ToString();
+                txtCompileMsg.Text = err.ToString().Replace("\n", "\r\n");
                 txtCompileMsg.ForeColor = Color.Red;
                 return "";
             }
@@ -115,7 +117,7 @@ namespace Mindustry_Compiler
             
             lineClass = GetCodeLineClass(l);
             lastLineClass = Enum.GetName(typeof(LineClass), lineClass);
-            lastPart = l;
+            lastCode = l;
             Console.WriteLine("Parse line " + (compileLineIndex + 1).ToString() + ": " + lastLineClass);
 
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
