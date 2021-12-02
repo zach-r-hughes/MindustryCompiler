@@ -127,35 +127,50 @@ namespace Mindustry_Compiler
                         string lhs = lineMatch.GetStr("lhs");
                         string assignOp = lineMatch.GetStr("assignop");
                         string rhs = lineMatch.GetStr("rhs");
-                        rhs = ParseRval(rhs);
 
-                        string asm;
                         switch (assignOp[0])
                         {
                             case '=':
                                 {
-                                    asm = BuildCode(
-                                        "set",          // Op
-                                        lhs.Trim(),     // Destination
-                                        rhs             // Value
-                                        );
+                                    // Optimize simple assignments
+                                    if (IsRvalSimple(rhs) || code.Count == 0)
+                                    {
+                                        string asm = BuildCode(
+                                            "set",              // Op
+                                            lhs.Trim(),         // Destination
+                                            rhs                 // Value
+                                            );
+                                        code.Add(asm);
+                                    }
+                                    else
+                                    {
+                                        ParseRval(rhs);
+                                        var rxAssignIntermediateReplace = new Regex(@"^op (?<op>\w+) (?<dest>\w+) (?<rest>.*)$");
+                                        var match = rxAssignIntermediateReplace.Match(code[code.Count - 1]);
+                                        var destGroup = match.Groups["dest"];
+                                        code[code.Count - 1] = code[code.Count - 1].ReplaceSection(destGroup.Index, destGroup.Length, lhs);
+
+                                        // Pop latest rval (unused)
+                                        intermediateValueIndex--;
+                                    }
                                 }
                                 break;
 
                             default:
                                 {
                                     string op = opMap[assignOp.Substring(0, 1)];
-                                    asm = BuildCode(
+                                    string asm = BuildCode(
                                         "op",
-                                        op,             // Operation
-                                        lhs,            // Destination
-                                        lhs,            // Operand 1
-                                        rhs             // Operand 2    
+                                        op,                     // Operation
+                                        lhs,                    // Destination
+                                        lhs,                    // Operand 1
+                                        ParseRval(rhs)          // Operand 2    
                                         );
+                                    code.Add(asm);
                                 }
                                 break;
                         }
-                        code.Add(asm);
+                        
                     }
                     break;
 
