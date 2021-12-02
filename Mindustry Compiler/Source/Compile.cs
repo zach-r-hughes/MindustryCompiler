@@ -222,7 +222,7 @@ namespace Mindustry_Compiler
                         string a = lineMatch.GetStr("a");
                         string b = lineMatch.GetStr("b");
 
-                        comp = comparisonMap[comp];
+                        comp = compMapCodeToAsm[comp];
                         a = ParseRval(a);
                         b = ParseRval(b);
 
@@ -404,14 +404,40 @@ namespace Mindustry_Compiler
                         string ifNextAlias = getNewJumpAlias(true);
                         IfStack_PushHistory(ifNextAlias);
 
-                        string asm = BuildCode(
-                            "jump",         // Op
-                            ifNextAlias,    // Line num
-                            "notEqual",     // Comp type
-                            result,         // Operand 1
-                            "true"          // Operand 2
-                            );
-                        code.Add(asm);
+                        // Check if previous instruction is a simple comparison
+                        var rxSimpleCompare = new Regex(@"^op (?<op>\w+) (?<dest>\w+) (?<rest>.*)$");
+                        var match = rxSimpleCompare.Match(code[code.Count - 1]);
+                        var op = match.GetStr("op");
+
+                        // Simple comparison on last instruction? Hi-jack it ...
+                        if (op.Length > 0 && compMapAsmToInverse.ContainsKey(op))
+                        {
+                            string compInv = compMapAsmToInverse[op];
+                            string rest = match.GetStr("rest");
+                            string asm = BuildCode(
+                                "jump",         // Op
+                                ifNextAlias,    // Line num
+                                compInv,        // Comp type
+                                rest            // Operand 1 & 2
+                                );
+                            code[code.Count - 1] = asm;
+
+                            // Pop unused intermediate ...
+                            intermediateValueIndex--;
+                        }
+
+                        // Complex comparison- compare against true
+                        else
+                        {
+                            string asm = BuildCode(
+                                "jump",         // Op
+                                ifNextAlias,    // Line num
+                                "notEqual",     // Comp type
+                                result,         // Operand 1
+                                "true"          // Operand 2
+                                );
+                            code.Add(asm);
+                        }
 
                         stackFrames.Push(new StackFrame(this, code)
                         {

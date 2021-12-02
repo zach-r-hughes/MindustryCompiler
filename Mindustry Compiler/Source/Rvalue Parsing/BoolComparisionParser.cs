@@ -19,6 +19,23 @@ namespace Mindustry_Compiler
             // Preprocess whitespace ...
             line = Regex.Replace(line, @"\s+", e => " ").Trim();
 
+
+            // Constant or single variable? Convert to '== true?'
+            if (IsRvalSimple(line))
+            {
+                string dest = getNewIntermediateName();
+                code.Add(BuildCode(
+                    "op",
+                    "equal",
+                    dest,
+                    line.Trim(),
+                    "true"
+                    ));
+                return dest;
+            }
+
+
+            // More complex bool comparison ...
             var rxBoolLogic = new Regex(@"(?<comparison>[^&\|]*)(?<andor>&&|\|\|)?");
             var match = rxBoolLogic.Match(line);
             if (!match.Success)
@@ -36,7 +53,7 @@ namespace Mindustry_Compiler
                     if (comp.Length == 0) break;
                     string andor = match.GetStr("andor").Trim();
 
-                    boolValNames.Add(ParseBoolComparisionToIntermediate(comp));
+                    boolValNames.Add(ParseBoolComparisionToIntermediate(comp).Trim());
                     if (andor.Length > 0) andorValues.Add(andor);
                 }
 
@@ -51,8 +68,8 @@ namespace Mindustry_Compiler
                 for (int i = 0; i < andorValues.Count; i++)
                 {
                     string boolOp = andorValues[i] == "&&" ? "land" : "or";
-                    string a = i == 0 ? boolValNames[i] : andorDest;
-                    string b = boolValNames[i + 1];
+                    string a = (i == 0 ? boolValNames[i] : andorDest).Trim();
+                    string b = boolValNames[i + 1].Trim();
 
                     string andorAsm = BuildCode(
                         "op",           // Op
@@ -85,9 +102,9 @@ namespace Mindustry_Compiler
             string comp = match.GetStr("b");
             string op2 = match.GetStr("c");
 
-            comp = comparisonMap[comp];
-            op1 = ParseRval(op1);
-            op2 = ParseRval(op2);
+            comp = compMapCodeToAsm[comp];
+            op1 = ParseRval(op1).Trim();
+            op2 = ParseRval(op2).Trim();
 
             string asm = BuildCode(
                 "op",           // Op

@@ -65,7 +65,7 @@ namespace Mindustry_Compiler
         /// <summary>
         /// Maps comparison strings to their op-codes
         /// </summary>
-        Dictionary<string, string> comparisonMap = new Dictionary<string, string>
+        Dictionary<string, string> compMapCodeToAsm = new Dictionary<string, string>
         {
             { "==", "equal" },
             { "!=", "notEqual" },
@@ -78,7 +78,7 @@ namespace Mindustry_Compiler
         /// <summary>
         /// Maps comparison strings to their opposite op-codes
         /// </summary>
-        Dictionary<string, string> comparisonMapInverse = new Dictionary<string, string>
+        Dictionary<string, string> compMapCodeToAsmInverse = new Dictionary<string, string>
         {
             { "==", "notEqual" },
             { "!=", "equal" },
@@ -86,6 +86,19 @@ namespace Mindustry_Compiler
             { ">", "lessThanEq" },
             { "<=", "greaterThan" },
             { ">=", "lessThan" },
+        };
+
+        /// <summary>
+        /// Maps an asm comparison operator to its logical asm inverse
+        /// </summary>
+        Dictionary<string, string> compMapAsmToInverse = new Dictionary<string, string>
+        {
+            { "equal", "notEqual" },
+            { "notEqual", "equal" },
+            { "lessThan", "greaterThanEq" },
+            { "greaterThanEq", "lessThan" },
+            { "greaterThan", "lessThanEq" },
+            { "lessThanEq", "greaterThan" }
         };
 
         /// <summary>
