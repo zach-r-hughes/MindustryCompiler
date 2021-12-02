@@ -29,6 +29,7 @@ namespace Mindustry_Compiler
             compileLineIndex = -1;
             PreFormat_StripComments(ref source);
             PreFormat_AliasStringLiterals_Input(ref source);
+            PreFormat_ParseEnums(ref source);
             Preformat_IncDec(ref source);
             PreFormat_SingleLineControl(ref source);
             PreFormat_FormatNewlines(ref source);
@@ -153,7 +154,9 @@ namespace Mindustry_Compiler
             }
         }
 
-
+        /// <summary>
+        /// Changes single line conditionals/branches/loops into parseable '{'+'}' multi-line
+        /// </summary>
         public void PreFormat_SingleLineControl(ref string source)
         {
             Match match;
@@ -225,5 +228,63 @@ namespace Mindustry_Compiler
             }
         }
 
+        /// <summary>
+        /// Preprocess enum defines. Create 'enum' aliases, add to 'enumAliasMap'
+        /// </summary>
+        public void PreFormat_ParseEnums(ref string source)
+        {
+            var enumAliasMap = new Dictionary<Regex, string>();
+
+            var rxEnumFind = new Regex(@"\benum\s*(?<name>\w+)\s*($|\n)?\s*(?<open>{)");
+            var match = rxEnumFind.Match(source);
+
+            // For each enum define, create 'startup' definition + add to map ...
+            while (match.Success)
+            {
+
+                // Read definitions ...
+                string enumName = match.GetStr("name");
+                int enumEndIndex;
+                string enumInner = source.ScanToClosing(match.Groups["open"].Index, out enumEndIndex, '{', '}');
+                enumInner = Regex.Replace(enumInner, @"(\s|\n)*", e => "");
+
+                // Split definitions ...
+                var split = enumInner.Split(',');
+                int outputVal = -1;
+                for (int i = 0; i < split.Length; i++)
+                {
+                    string name = split[i];
+                    if (name.Length == 0)
+                        continue;
+
+                    // Define remap values ...
+                    if (name.Contains("="))
+                    {
+                        int equalIdx = name.IndexOf('=');
+                        string val = name.Substring(equalIdx + 1);
+                        name = name.Substring(0, equalIdx);
+
+                        // 'val' is constant?
+                        if (!IsRvalNumericConstant(val) || val.Contains('.'))
+                            throw new Exception("Enum must be a constant integer");
+
+                        outputVal = int.Parse(val);
+                    }
+                    else
+                        outputVal++;
+
+                    // Add alias mappings (local and namespace style)...
+                    string pattern = string.Format(@"\b(({0}\s*::\s*{1})|({1}))\b", enumName, name);
+                    enumAliasMap.Add(new Regex(pattern), outputVal.ToString());
+                }
+
+                source = source.ReplaceSection(match.Index, enumEndIndex - match.Index, "");
+                match = rxEnumFind.Match(source);
+            }
+
+            // Replace 'in source' references to enum with handle ...
+            foreach (var enumRef in enumAliasMap)
+                source = enumRef.Key.Replace(source, e => enumRef.Value);
+        }
     }
 }

@@ -36,9 +36,9 @@ namespace Mindustry_Compiler
                 // ~~~~~~ Create base program frame, and stack ...
                 compileLineIndex = -1;
                 lastLineClass = "Preformat Code";
-                PreFormatSource(ref source);
                 InitializeAliases();
                 InitalizeStackFrames();
+                PreFormatSource(ref source);
                 InitializeFunctions(ref source);
                 InitializeIfStack();
 
@@ -488,7 +488,6 @@ namespace Mindustry_Compiler
 
 
                         // Update most recent 
-
                         stackFrames.Push(new StackFrame(this, code)
                         {
                             EndAction = (self) =>

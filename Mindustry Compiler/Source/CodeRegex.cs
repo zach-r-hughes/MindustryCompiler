@@ -283,6 +283,8 @@ namespace Mindustry_Compiler
         /// </summary>
         readonly Regex rxAsm = new Regex(@"(\n|^)\s*asm\s*\((?<v>[^#].*)\s*\)\s*;?\s*(\n|$)");
 
+        readonly Regex rxEnum = new Regex(@"enum\s*(?<name>\w+)\s*($|\n)");
+
         //==============================================================================
         /// <summary>
         /// Classify a line of code.
