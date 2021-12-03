@@ -30,6 +30,7 @@ namespace Mindustry_Compiler
             PreFormat_StripComments(ref source);
             PreFormat_AliasStringLiterals_Input(ref source);
             PreFormat_ParseEnums(ref source);
+            PreFormat_Switch(ref source);
             Preformat_IncDec(ref source);
             PreFormat_SingleLineControl(ref source);
             PreFormat_FormatNewlines(ref source);
@@ -60,6 +61,7 @@ namespace Mindustry_Compiler
         
 
         //================================================================================
+
         /// <summary>
         /// Remove comments and multi-line comments from source
         /// </summary>
@@ -74,6 +76,9 @@ namespace Mindustry_Compiler
             source = Regex.Replace(source, @"(\/\*)((?!\*\/)(.|\n|\r))*(\*\/)", e => "").Trim();
         }
 
+        /// <summary>
+        /// Transform post-inc/decrements into parsable '+= 1' and '-= 1'
+        /// </summary>
         void Preformat_IncDec(ref string source)
         {
             lastLineClass = "Parse Increments/Decrements";
@@ -99,6 +104,7 @@ namespace Mindustry_Compiler
                 source = source.ReplaceMatch(match, "\n");
                 match = rxBlankLine.Match(source);
             }
+            if (source[0] == '\n') source = source.Substring(1);
         }
 
         /// <summary>
@@ -285,6 +291,126 @@ namespace Mindustry_Compiler
             // Replace 'in source' references to enum with handle ...
             foreach (var enumRef in enumAliasMap)
                 source = enumRef.Key.Replace(source, e => enumRef.Value);
+        }
+
+        /// <summary>
+        /// Pre-format switch statements. Pre-converts switch statements into jumps.
+        /// </summary>
+        public void PreFormat_Switch(ref string source)
+        {
+            int switchIndex = 0;
+            var rxSwitch = new Regex(@"\bswitch\s*(?<v>\()");
+            var match = rxSwitch.Match(source);
+
+            while(match.Success)
+            {
+                // Find switch value (in parenthesis)
+                string value = source.ScanToClosing(match.Groups["v"].Index);
+                string defaultLabel = "";
+                string endSwitchJumpAlias = string.Format("__sw{0}_end_", switchIndex);
+
+                // Find curly-brace open ...
+                int switchOpenIndex = source.IndexOf('{', match.Index + value.Length + 1);
+                int switchCloseIndex;
+                string switchInner = source.ScanToClosing(switchOpenIndex, out switchCloseIndex, '{', '}');
+
+                var rxCaseLabelPattern = @"\b(case\s*(?<v>\w+)|(?<v>default))\s*:";
+                var caseLabelGroups = Regex.Matches(switchInner, rxCaseLabelPattern);
+                var caseInner = Regex.Split(switchInner, rxCaseLabelPattern);
+
+                // Create alias for labels
+                var caseJumpAlias = new string[caseLabelGroups.Count];
+                var caseLabel = new string[caseLabelGroups.Count];
+                int defaultIndex = -1;
+                {
+                    var seenLabels = new HashSet<string>();
+                    for (int i = 0; i < caseJumpAlias.Length; i++)
+                    {
+                        string caseText = caseLabelGroups[i].GetStr("v");
+
+                        if (seenLabels.Contains(caseText))
+                            throw new Exception("Switch case label cannot appear more than once.");
+
+                        else if (caseText == "default")
+                        {
+                            if (defaultLabel.Length > 0)
+                                throw new Exception("Multiple 'default' labels in switch case.");
+                            defaultLabel = caseJumpAlias[caseJumpAlias.Length - 1];
+                            defaultIndex = i;
+                        }
+
+                        else if (!IsRvalNumericConstant(caseText))
+                            throw new Exception("Switch case labels must be constant/enum.");
+
+                        // Set case label ...
+                        caseJumpAlias[i] = string.Format("__sw{0}_c{1}", switchIndex, i);
+                        caseLabel[i] = caseText;
+                    }
+                }
+
+
+                // Replace 'case x:' with jump alias...
+                for (int i = caseJumpAlias.Length; --i >=0;)
+                    switchInner = switchInner.ReplaceMatch(caseLabelGroups[i], caseJumpAlias[i] + ":");
+
+                // Replace 'break' with jump to alias
+                string breakJumpAsm = BuildCode(
+                    "set",                  // Op
+                    "@counter",             // Destination
+                    endSwitchJumpAlias      // Value
+                    );
+                switchInner = Regex.Replace(switchInner, @"\bbreak;", e => 
+                    "asm(" + breakJumpAsm + ");");
+
+                // Put 'default' jump last
+                if (defaultIndex != -1)
+                {
+                    string tmp;
+
+                    tmp = caseJumpAlias[caseJumpAlias.Length - 1];
+                    caseJumpAlias[caseJumpAlias.Length - 1] = caseJumpAlias[defaultIndex];
+                    caseJumpAlias[defaultIndex] = tmp;
+
+                    tmp = caseLabel[caseLabel.Length - 1];
+                    caseLabel[caseLabel.Length - 1] = caseLabel[defaultIndex];
+                    caseLabel[defaultIndex] = tmp;
+                }
+
+
+                // Create condition 'jump' code ...
+                var preJumpCode = new List<string>();
+                for (int i = 0; i < caseJumpAlias.Length - (defaultIndex != -1 ? 1 : 0); i++)
+                {
+                    string jumpToCaseAsm = BuildCode(
+                        "jump",                 // Op
+                        caseJumpAlias[i],       // Line num
+                        "equal",                // Comparision
+                        value,                  // Operand 1
+                        caseLabel[i]            // Operand 2
+                        );
+                    preJumpCode.Add("asm(" + jumpToCaseAsm + ");");
+                }
+
+                // Has 'default'? Go there - else go end ...
+                int defi = caseJumpAlias.Length - 1;
+                string noMatchTarget = defaultIndex == -1 ? endSwitchJumpAlias : caseJumpAlias[defi];
+                preJumpCode.Add("asm(" + BuildCode(
+                    "set",                  // Op
+                    "@counter",             // Destination
+                    noMatchTarget          // Line num
+                    ) + ");");
+
+                // Replace 'source'...
+                string newSwitchCode = 
+                    string.Join("\n", preJumpCode) + "\n" +
+                    switchInner + "\n" +
+                    endSwitchJumpAlias + ":";
+
+                source = source.ReplaceSection(match.Index, switchCloseIndex - match.Index, newSwitchCode);
+
+                switchIndex++;
+                match = rxSwitch.Match(source);
+            }
         }
     }
 }

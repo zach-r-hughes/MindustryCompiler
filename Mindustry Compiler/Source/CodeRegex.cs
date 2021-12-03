@@ -213,7 +213,7 @@ namespace Mindustry_Compiler
         /// Matches a line num reference.
         /// Groups: 'num'
         /// </summary>
-        readonly Regex rxLineNumReference = new Regex(@"(?<alias>__\w+_\+?)");
+        readonly Regex rxLineNumReference = new Regex(@"(set\s*@counter\s*(?<alias>\w+\+?))|(jump\s*(?<alias>\w+\+?)\s*\w+\s*\w+\s*\w+)");
 
         /// <summary>
         /// Matches a line num target reference.
@@ -283,8 +283,6 @@ namespace Mindustry_Compiler
         /// </summary>
         readonly Regex rxAsm = new Regex(@"(\n|^)\s*asm\s*\((?<v>[^#].*)\s*\)\s*;?\s*(\n|$)");
 
-        readonly Regex rxEnum = new Regex(@"enum\s*(?<name>\w+)\s*($|\n)");
-
         //==============================================================================
         /// <summary>
         /// Classify a line of code.
@@ -293,6 +291,8 @@ namespace Mindustry_Compiler
         {
             // Convert commands ...
             if (code.StartsWith("//")) return LineClass.Comment;
+
+            if (code.Length == 0) return LineClass.Empty;
 
             lineMatch = rxGoTo.Match(code);
             if (lineMatch.Success) return LineClass.GoTo;

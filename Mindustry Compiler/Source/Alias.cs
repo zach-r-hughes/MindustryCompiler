@@ -35,8 +35,6 @@ namespace Mindustry_Compiler
             if (match.Success)
             {
                 label = match.GetStr("alias");
-                if (!label.StartsWith("__"))
-                    label = "__" + label;
                 str = match.GetStr("code");
             }
             return label;
@@ -87,7 +85,7 @@ namespace Mindustry_Compiler
 
                     // Not a line ref? skip...
                     if (lineRefMap.ContainsKey(alias))
-                        code[i] = code[i].ReplaceMatch(match, lineRefMap[alias].ToString());
+                        code[i] = code[i].ReplaceSection(match.Groups["alias"].Index, alias.Length, lineRefMap[alias].ToString());
 
                     match = match.NextMatch();
                 }

@@ -74,7 +74,13 @@ namespace Mindustry_Compiler
 
                 // Printed something? ...
                 if (doPrintFlush)
-                    code.Insert(code.Count - 1, BuildCode("printflush", "message1"));
+                {
+                    string last = code[code.Count - 1];
+                    code.RemoveAt(code.Count - 1);
+                    string lbl = PopJumpLabel(ref last);
+                    code.Add((lbl.Length > 0 ? lbl + ":" : "") + BuildCode("printflush", "message1"));
+                    code.Add(last);
+                }
 
                 FinalizeFunctions();
                 FinalizeAliases();
@@ -673,7 +679,6 @@ namespace Mindustry_Compiler
                                 "true"          // True
                                 );
 
-
                                 // End of loop (next -> jump to body again?)
                                 self.parentCode.AddRange(compInstructions);
                                 self.parentCode.Add(jumpEndAlias + ":" + jumpBodyAsm);
@@ -825,8 +830,13 @@ namespace Mindustry_Compiler
             // Prepend label again?
             if (lineJumpLabel != "")
             {
-                if (codeListStart.Count > 0)
-                    codeListStart[codeCountStart] = lineJumpLabel + ":" + codeListStart[codeCountStart];
+                if (code.Count > codeCountStart)
+                {
+                    if (codeListStart.Count > 0)
+                        codeListStart[codeCountStart] = lineJumpLabel + ":" + codeListStart[codeCountStart];
+                    else
+                        codeListStart.Add(lineJumpLabel + ":");
+                }
                 else
                     codeListStart.Add(lineJumpLabel + ":");
             }

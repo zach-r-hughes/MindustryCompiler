@@ -115,7 +115,6 @@ namespace Mindustry_Compiler
             // ~~~~~~~~ Restore controls (path, compile checkboxes)
             SourcePath = Properties.Settings.Default.SourcePath;
             chkCompileOnFocus.Checked = Properties.Settings.Default.CompileOnFocus;
-            CompileFromSourceFile();
 
             if (SourcePath.Length == 0)
             {
