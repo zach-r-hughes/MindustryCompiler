@@ -41,6 +41,7 @@ namespace Mindustry_Compiler
                 PreFormatSource(ref source);
                 InitializeFunctions(ref source);
                 InitializeIfStack();
+                InitializeLoopBreakStack();
 
 
                 // ~~~~~~ Process lines
@@ -409,7 +410,7 @@ namespace Mindustry_Compiler
                     {
                         string condition = lineMatch.GetStr("inner");
                         string result = ParseBool(condition);
-                        string ifNextAlias = getNewJumpAlias(true);
+                        string ifNextAlias = getNewJumpAlias();
                         IfStack_PushHistory(ifNextAlias);
 
                         // Check if previous instruction is a simple comparison
@@ -452,7 +453,7 @@ namespace Mindustry_Compiler
                             EndAction = (self) =>
                             {
                                 int iLast = self.parentCode.Count - 1;
-                                self.parentCode[iLast] = ifNextAlias + ":" + self.parentCode[iLast];
+                                self.parentCode[iLast] = ifNextAlias + "+:" + self.parentCode[iLast];
 
                                 IfStack_PopHistory();
                             }
@@ -564,18 +565,18 @@ namespace Mindustry_Compiler
                         var compInstructions = new List<string>();
                         string jumpEndAsm;
                         string compRval;
-                        string jumpEndAlias = getNewJumpAlias(true);
+                        string jumpEndAlias = getNewJumpAlias();
                         string jumpBodyAlias = getNewJumpAlias();
 
                         using (var tir = new TemporaryInstructionRetarget(this, compInstructions))
                         {
                             compRval = ParseBool(comp);
                             jumpEndAsm = BuildCode(
-                                "jump",         // Op
-                                jumpEndAlias,   // Line num
-                                "notEqual",     // Comp type
-                                compRval,       // Condition
-                                "true"          // True
+                                "jump",             // Op
+                                jumpEndAlias,       // Line num
+                                "notEqual",         // Comp type
+                                compRval,           // Condition
+                                "true"              // True
                                 );
                         }
 
@@ -603,17 +604,17 @@ namespace Mindustry_Compiler
                             EndAction_PreDumpToParent = (self) =>
                             {
                                 if (self.code.Count > 0)
-                                    self.code[0] = jumpBodyAlias + ":" + self.code[0];
+                                    self.code[0] = jumpBodyAlias + "+:" + self.code[0];
                             },
 
                             EndAction = (self) =>
                             {
                                 string jumpBodyAsm = BuildCode(
-                                "jump",         // Op
-                                jumpBodyAlias,  // Line num
-                                "equal",        // Comp type
-                                compRval,       // Condition
-                                "true"          // True
+                                "jump",             // Op
+                                jumpBodyAlias,      // Line num
+                                "equal",            // Comp type
+                                compRval,           // Condition
+                                "true"              // True
                                 );
 
 
@@ -621,9 +622,12 @@ namespace Mindustry_Compiler
                                 self.parentCode.AddRange(incInstructions);
                                 self.parentCode.AddRange(compInstructions);
                                 self.parentCode.Add(jumpEndAlias + ":" + jumpBodyAsm);
+
+                                // Remove loop-stack entry ..
+                                LoopBreakStackPop();
                             },
                         });
-
+                        LoopBreakStackPush(jumpEndAlias);
                         isNextStackLinked = true;
                     }
                     break;
@@ -632,32 +636,60 @@ namespace Mindustry_Compiler
                 case LineClass.WhileLoop:
                     {
                         // Process assign (as separate line)
-                        string comp = lineMatch.GetStr("a");
+                        string comp = l.ScanToClosing(lineMatch.Groups["open"].Index);
 
 
                         // ~~~~~~ A: comparison/conditional jump instructions
                         var compInstructions = new List<string>();
                         string jumpEndAsm;
                         string compRval;
-                        string jumpEndAlias = getNewJumpAlias(true);
+                        string jumpEndAlias = getNewJumpAlias();
                         string jumpBodyAlias = getNewJumpAlias();
 
                         using (var tir = new TemporaryInstructionRetarget(this, compInstructions))
                         {
                             compRval = ParseBool(comp);
-                            jumpEndAsm = BuildCode(
-                                "jump",         // Op
-                                jumpEndAlias,   // Line num
-                                "notEqual",     // Comp type
-                                compRval,       // Condition
-                                "true"          // True
-                                );
+                            if (compInstructions.Count == 0)
+                                throw new Exception("Loop condition is empty.");
+
+                            // Check if previous instruction is a simple comparison
+                            var rxSimpleCompare = new Regex(@"^op (?<op>\w+) (?<dest>\w+) (?<rest>.*)$");
+                            var match = rxSimpleCompare.Match(code[code.Count - 1]);
+                            var op = match.GetStr("op");
+
+                            // Simple comparison on last instruction? Hi-jack it ...
+                            if (op.Length > 0 && compMapAsmToInverse.ContainsKey(op))
+                            {
+                                string compInv = compMapAsmToInverse[op];
+                                string rest = match.GetStr("rest");
+                                jumpEndAsm = BuildCode(
+                                    "jump",                 // Op
+                                    jumpEndAlias,           // Line num
+                                    compInv,                // Comp type
+                                    rest                    // Operand 1 & 2
+                                    );
+                                code[code.Count - 1] = jumpEndAsm;
+
+                                // Pop unused intermediate ...
+                                intermediateValueIndex--;
+                            }
+
+                            // Complex comparison- compare against true
+                            else
+                            {
+                                jumpEndAsm = BuildCode(
+                                    "jump",                 // Op
+                                    jumpEndAlias,           // Line num
+                                    "notEqual",             // Comp type
+                                    compRval,               // Operand 1
+                                    "true"                  // Operand 2
+                                    );
+                                code.Add(jumpEndAsm);
+                            }
                         }
 
                         // Initial jump/skip codeblock (condition == false)?
                         code.AddRange(compInstructions);
-                        code.Add(jumpEndAsm);
-
 
                         // Body + go to start
                         string initJump = getNewJumpAlias();
@@ -666,26 +698,136 @@ namespace Mindustry_Compiler
                             EndAction_PreDumpToParent = (self) =>
                             {
                                 if (self.code.Count > 0)
-                                    self.code[0] = jumpBodyAlias + ":" + self.code[0];
+                                    self.code[0] = jumpBodyAlias + "+:" + self.code[0];
                             },
 
                             EndAction = (self) =>
                             {
                                 string jumpBodyAsm = BuildCode(
-                                "jump",         // Op
-                                jumpBodyAlias,  // Line num
-                                "equal",        // Comp type
-                                compRval,       // Condition
-                                "true"          // True
+                                "jump",             // Op
+                                jumpBodyAlias,      // Line num
+                                "equal",            // Comp type
+                                compRval,           // Condition
+                                "true"              // True
                                 );
 
                                 // End of loop (next -> jump to body again?)
                                 self.parentCode.AddRange(compInstructions);
                                 self.parentCode.Add(jumpEndAlias + ":" + jumpBodyAsm);
+
+                                // Remove loop-stack entry ..
+                                LoopBreakStackPop();
                             },
                         });
 
+                        LoopBreakStackPush(jumpEndAlias);
                         isNextStackLinked = true;
+                    }
+                    break;
+
+
+                case LineClass.DoWhileLoop:
+                    {
+                        // Process assign (as separate line)
+                        string comp = l.ScanToClosing(lineMatch.Groups["open"].Index);
+
+
+                        // ~~~~~~ A: comparison/conditional jump instructions
+                        var compInstructions = new List<string>();
+                        string jumpEndAsm;
+                        string compRval;
+                        string jumpEndAlias = getNewJumpAlias();
+                        string jumpBodyAlias = getNewJumpAlias();
+
+                        using (var tir = new TemporaryInstructionRetarget(this, compInstructions))
+                        {
+                            compRval = ParseBool(comp);
+                            if (compInstructions.Count == 0)
+                                throw new Exception("Loop condition is empty.");
+
+                            // Check if previous instruction is a simple comparison
+                            var rxSimpleCompare = new Regex(@"^op (?<op>\w+) (?<dest>\w+) (?<rest>.*)$");
+                            var match = rxSimpleCompare.Match(code[code.Count - 1]);
+                            var op = match.GetStr("op");
+
+                            // Simple comparison on last instruction? Hi-jack it ...
+                            if (op.Length > 0 && compMapAsmToInverse.ContainsKey(op))
+                            {
+                                string compInv = compMapAsmToInverse[op];
+                                string rest = match.GetStr("rest");
+                                jumpEndAsm = BuildCode(
+                                    "jump",                 // Op
+                                    jumpEndAlias,           // Line num
+                                    compInv,                // Comp type
+                                    rest                    // Operand 1 & 2
+                                    );
+                                code[code.Count - 1] = jumpEndAsm;
+
+                                // Pop unused intermediate ...
+                                intermediateValueIndex--;
+                            }
+
+                            // Complex comparison- compare against true
+                            else
+                            {
+                                jumpEndAsm = BuildCode(
+                                    "jump",                 // Op
+                                    jumpEndAlias,           // Line num
+                                    "notEqual",             // Comp type
+                                    compRval,               // Operand 1
+                                    "true"                  // Operand 2
+                                    );
+                                code.Add(jumpEndAsm);
+                            }
+                        }
+
+                        // Body + go to start
+                        string initJump = getNewJumpAlias();
+                        stackFrames.Push(new StackFrame(this, code)
+                        {
+                            EndAction_PreDumpToParent = (self) =>
+                            {
+                                if (self.code.Count > 0)
+                                    self.code[0] = jumpBodyAlias + "+:" + self.code[0];
+                            },
+
+                            EndAction = (self) =>
+                            {
+                                string jumpBodyAsm = BuildCode(
+                                "jump",             // Op
+                                jumpBodyAlias,      // Line num
+                                "equal",            // Comp type
+                                compRval,           // Condition
+                                "true"              // True
+                                );
+
+                                // End of loop (next -> jump to body again?)
+                                self.parentCode.AddRange(compInstructions);
+                                self.parentCode.Add(jumpEndAlias + ":" + jumpBodyAsm);
+
+                                // Remove loop-stack entry ..
+                                LoopBreakStackPop();
+                            },
+                        });
+
+                        LoopBreakStackPush(jumpEndAlias);
+                        isNextStackLinked = true;
+                    }
+                    break;
+
+                case LineClass.Break:
+                    {
+                        // Jump to 'end of loop' stack
+                        if (__loopBreakStack.Count == 0)
+                            throw new Exception("Cannot break outside the body of a loop");
+                        string breakJumpAlias = LoopBreakStackGetTop();
+
+                        string asm = BuildCode(
+                            "set",              // Op
+                            "@counter",         // Destination
+                            breakJumpAlias      // Value
+                            );
+                        code.Add(asm);
                     }
                     break;
 

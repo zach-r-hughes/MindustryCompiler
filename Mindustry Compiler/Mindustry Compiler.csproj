@@ -52,6 +52,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LoopStack.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Source\Alias.cs">
       <SubType>Form</SubType>
     </Compile>

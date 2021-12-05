@@ -13,6 +13,9 @@ namespace Mindustry_Compiler
         public static string ReplaceMatch(this string txt, Match match, string newValue) =>
             txt.ReplaceSection(match.Index, match.Length, newValue);
 
+        public static string ReplaceMatch(this string txt, Group group, string newValue) =>
+            txt.ReplaceSection(group.Index, group.Length, newValue);
+
         public static string ReplaceSection(this string txt, int start, int len, string newvalue)
         {
             string before = txt.Substring(0, start);

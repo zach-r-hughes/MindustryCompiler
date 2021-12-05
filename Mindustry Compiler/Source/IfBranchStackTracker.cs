@@ -37,7 +37,7 @@ namespace Mindustry_Compiler
         public void IfStack_PushHistory(string ifNextAlias)
         {
             ifStackDepth++;
-            ifStackLastNextIfAlias = ifNextAlias;
+            ifStackLastNextIfAlias = ifNextAlias.Replace("+", "");
         }
 
 

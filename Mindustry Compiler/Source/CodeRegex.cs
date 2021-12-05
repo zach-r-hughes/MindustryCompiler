@@ -40,6 +40,7 @@ namespace Mindustry_Compiler
             FunctionCall,
             Sleep,
             Wait,
+            Break,
             Invalid,
         }
 
@@ -207,7 +208,12 @@ namespace Mindustry_Compiler
         /// Matches a for loop.
         /// Groups: 'a', 'b', 'c'
         /// </summary>
-        readonly Regex rxWhile = new Regex(@"\bwhile\s*\((?<a>.*)\)\s*(\n|$)");
+        readonly Regex rxWhile = new Regex(@"^\s*while(\s*)*(?<open>\()");
+
+        /// <summary>
+        /// Matches a do-while loop.
+        /// </summary>
+        readonly Regex rxDoWhile = new Regex(@"^\s*do\s*while(\s*)*(?<open>\()");
 
         /// <summary>
         /// Matches a line num reference.
@@ -275,13 +281,18 @@ namespace Mindustry_Compiler
         /// <summary>
         /// Matches a function definition
         /// </summary>
-        readonly Regex rxFunctionDefinition = new Regex(@"(\n|^)\s*((?!(if|else|while))(\w+)\s+)(?<a>\w+)\s*\((?<params>[^\)]*)\)\s*(\n|$)");
+        readonly Regex rxFunctionDefinition = new Regex(@"(\n|^)\s*((?!(if|else|while|do))(\w+)\s+)(?<a>\w+)\s*\((?<params>[^\)]*)\)\s*(\n|$)");
 
         /// <summary>
         /// Matches an 'asm' instruction.
         /// Groups: 'v'
         /// </summary>
         readonly Regex rxAsm = new Regex(@"(\n|^)\s*asm\s*\((?<v>[^#].*)\s*\)\s*;?\s*(\n|$)");
+
+        /// <summary>
+        /// Matches a 'break' loop/switch keyword.
+        /// </summary>
+        readonly Regex rxBreak = new Regex(@"break\s*(;|\n|$)");
 
         //==============================================================================
         /// <summary>
@@ -330,6 +341,9 @@ namespace Mindustry_Compiler
             lineMatch = rxForLoop.Match(code);
             if (lineMatch.Success) return LineClass.ForLoop;
 
+            lineMatch = rxDoWhile.Match(code);
+            if (lineMatch.Success) return LineClass.DoWhileLoop;
+
             lineMatch = rxWhile.Match(code);
             if (lineMatch.Success) return LineClass.WhileLoop;
 
@@ -365,6 +379,9 @@ namespace Mindustry_Compiler
 
             lineMatch = rxAssign.Match(code);
             if (lineMatch.Success) return LineClass.Assign;
+
+            lineMatch = rxBreak.Match(code);
+            if (lineMatch.Success) return LineClass.Break;
 
             return LineClass.Invalid;
         }

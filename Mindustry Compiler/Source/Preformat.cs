@@ -32,6 +32,7 @@ namespace Mindustry_Compiler
             PreFormat_ParseEnums(ref source);
             PreFormat_Switch(ref source);
             Preformat_IncDec(ref source);
+            PreFormat_DoWhile(ref source);
             PreFormat_SingleLineControl(ref source);
             PreFormat_FormatNewlines(ref source);
         }
@@ -411,6 +412,63 @@ namespace Mindustry_Compiler
                 switchIndex++;
                 match = rxSwitch.Match(source);
             }
+        }
+
+        /// <summary>
+        /// Pre-arranges do-while loops with their condition.
+        /// </summary>
+        public void PreFormat_DoWhile(ref string source)
+        {
+            var rxDoWhile = new Regex(@"\b(?<a>do)(\s*|\n)*(?<open>{)");
+            var rxWhileCond = new Regex(@"(\s*|\n)*while\s*(?<open>\()[^;]*;");
+            var match = rxDoWhile.Match(source);
+
+            while (match.Success)
+            {
+                // Scan to closing brace ...
+                int bodyStart = match.Groups["open"].Index;
+                int bodyEnd;
+                string body = source.ScanToClosing(bodyStart, out bodyEnd, '{', '}');
+
+                // Grab the 'while' condition...
+                var matchWhile = rxWhileCond.Match(source, bodyEnd);
+                int condStart = matchWhile.Groups["open"].Index;
+                int condEnd;
+                string cond = source.ScanToClosing(condStart, out condEnd, '(', ')');
+
+
+                // Remove while+condition from source ...
+                source = source.ReplaceMatch(matchWhile, "");
+
+                // Add 'condition' to 'do'
+                source = source.ReplaceMatch(match.Groups["a"], "do while(" + cond + ")");
+
+                // scan forward for the 'while (condition)' part ...
+                match = rxDoWhile.Match(source);
+            }
+
+
+
+            // Single line 'do-while'....
+            var rxDoWhileOneLine = new Regex(@"(\s|\n)*(?<do>do(\s*|\n)*(?<fn>[^;]*);(\s|\n)*while(\s|\n)*(?<open>\([^;]*);)");
+            match = rxDoWhileOneLine.Match(source);
+
+            while (match.Success)
+            {
+                int condOpen = match.Groups["open"].Index;
+                int condClose;
+                string cond = source.ScanToClosing(condOpen, out condClose);
+
+
+                source = source.ReplaceMatch(match.Groups["do"],
+                    "do while(" + cond + ")" +
+                    " \n{\n\t" + match.Groups["fn"].Value + "\n}\n");
+
+                match = rxDoWhileOneLine.Match(source);
+            }
+
+
+            
         }
     }
 }
