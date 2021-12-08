@@ -69,18 +69,7 @@ namespace Mindustry_Compiler
                             lines[i] = pair.Key.Replace(lines[i], pair.Value);
                     }
 
-                    // Actually process line ...
                     ProcessLine(lines[i]);
-                }
-
-                // Printed something? ...
-                if (doPrintFlush)
-                {
-                    string last = code[code.Count - 1];
-                    code.RemoveAt(code.Count - 1);
-                    string lbl = PopJumpLabel(ref last);
-                    code.Add((lbl.Length > 0 ? lbl + ":" : "") + BuildCode("printflush", "message1"));
-                    code.Add(last);
                 }
 
                 FinalizeFunctions();
@@ -120,7 +109,7 @@ namespace Mindustry_Compiler
             // Pop jump label
             int codeCountStart = code.Count;
             var codeListStart = code;
-            string lineJumpLabel = PopJumpLabel(ref l);
+            jumpAliasProcessLineStack.Push(PopJumpLabel(ref l));
             
             lineClass = GetCodeLineClass(l);
             lastLineClass = Enum.GetName(typeof(LineClass), lineClass);
@@ -131,6 +120,9 @@ namespace Mindustry_Compiler
             // Preprocess ...
             switch (lineClass)
             {
+                case LineClass.Invalid:
+                    throw new Exception("Source line uknown type.");
+
                 case LineClass.Assign:
                     {
                         string lhs = lineMatch.GetStr("lhs");
@@ -158,9 +150,6 @@ namespace Mindustry_Compiler
                                         var match = rxAssignIntermediateReplace.Match(code[code.Count - 1]);
                                         var destGroup = match.Groups["dest"];
                                         code[code.Count - 1] = code[code.Count - 1].ReplaceSection(destGroup.Index, destGroup.Length, lhs);
-
-                                        // Pop latest rval (unused)
-                                        intermediateValueIndex--;
                                     }
                                 }
                                 break;
@@ -331,6 +320,31 @@ namespace Mindustry_Compiler
                     }
                     break;
 
+
+                case LineClass.PrintFlush:
+                    {
+                        int open = lineMatch.Groups["open"].Index;
+                        int close;
+                        string flushTo = l.ScanToClosing(open, out close).Trim();
+
+                        // Adjust 'flush to' target (convenience)
+                        if (flushTo.Length == 0)
+                            flushTo = "message1";
+                        else if (flushTo == "0")
+                            flushTo = "message1";
+                        else if (flushTo.IsNumeric())
+                            flushTo = "message" + flushTo;
+
+
+                        string asm = BuildCode(
+                            "printflush",               // Op
+                            flushTo                     // Target
+                            );
+                        code.Add(asm);
+                    }
+
+                    break;
+
                 case LineClass.ControlEnable:
                     {
                         string obj = lineMatch.GetStr("obj");
@@ -409,44 +423,11 @@ namespace Mindustry_Compiler
                 case LineClass.If:
                     {
                         string condition = lineMatch.GetStr("inner");
-                        string result = ParseBool(condition);
                         string ifNextAlias = getNewJumpAlias();
                         IfStack_PushHistory(ifNextAlias);
+                        ifStackLastEndIfAlias = ifNextAlias;
+                        Branch_AddJumpAsmOptimized(ifNextAlias, condition);
 
-                        // Check if previous instruction is a simple comparison
-                        var rxSimpleCompare = new Regex(@"^op (?<op>\w+) (?<dest>\w+) (?<rest>.*)$");
-                        var match = rxSimpleCompare.Match(code[code.Count - 1]);
-                        var op = match.GetStr("op");
-
-                        // Simple comparison on last instruction? Hi-jack it ...
-                        if (op.Length > 0 && compMapAsmToInverse.ContainsKey(op))
-                        {
-                            string compInv = compMapAsmToInverse[op];
-                            string rest = match.GetStr("rest");
-                            string asm = BuildCode(
-                                "jump",         // Op
-                                ifNextAlias,    // Line num
-                                compInv,        // Comp type
-                                rest            // Operand 1 & 2
-                                );
-                            code[code.Count - 1] = asm;
-
-                            // Pop unused intermediate ...
-                            intermediateValueIndex--;
-                        }
-
-                        // Complex comparison- compare against true
-                        else
-                        {
-                            string asm = BuildCode(
-                                "jump",         // Op
-                                ifNextAlias,    // Line num
-                                "notEqual",     // Comp type
-                                result,         // Operand 1
-                                "true"          // Operand 2
-                                );
-                            code.Add(asm);
-                        }
 
                         stackFrames.Push(new StackFrame(this, code)
                         {
@@ -466,33 +447,22 @@ namespace Mindustry_Compiler
                 case LineClass.ElseIf:
                     {
                         // Remove (reposition) the 'end if' label
-                        code[code.Count - 1] = IfStack_PopEndIfAliasForElseIf(code[code.Count - 1]);
+                        code[code.Count - 1] = IfStack_PopIfAliases(code[code.Count - 1]);
 
-                        // Insert 'jumpToEndIf' at end of 'if' body ...
+                        // Insert 'goto end if' at end of previous if body ...
                         string skipElseAsm = BuildCode(
-                            "jump",                     // Op
-                            ifStackLastEndIfAlias,      // Line num
-                            "always",                   // Comp type
-                            "0",                        // Operand 1
-                            "0");                       // Operand 2
-                        code.Add(ifStackLastNextIfAlias + ":" + skipElseAsm);
+                            "jump",                         // Op
+                            ifStackLastEndIfAlias,          // Line num
+                            "always",                       // Comp type
+                            "0",                            // Operand 1
+                            "0");                           // Operand 2
+                        code.Add(ifStackLastNextIfAlias + "+:" + skipElseAsm);
 
 
                         // Create new 'if-next' jump alias
-                        ifStackLastNextIfAlias = getNewJumpAlias(true);
-
-                        // Add else condition
                         string condition = lineMatch.GetStr("inner");
-                        string result = ParseBool(condition);
-                        string asm = BuildCode(
-                            "jump",                     // Op
-                            ifStackLastNextIfAlias,     // Line num
-                            "notEqual",                 // Comp type
-                            result,                     // Operand 1
-                            "true"                      // Operand 2
-                            );
-                        code.Add(asm);
-
+                        ifStackLastNextIfAlias = getNewJumpAlias();
+                        Branch_AddJumpAsmOptimized(ifStackLastNextIfAlias, condition);
 
                         // Update most recent 
                         stackFrames.Push(new StackFrame(this, code)
@@ -500,7 +470,7 @@ namespace Mindustry_Compiler
                             EndAction = (self) =>
                             {
                                 int iLast = self.parentCode.Count - 1;
-                                self.parentCode[iLast] = ifStackLastEndIfAlias + ":" + ifStackLastNextIfAlias+ ":" + self.parentCode[iLast];
+                                self.parentCode[iLast] = ifStackLastEndIfAlias + "+:" + ifStackLastNextIfAlias+ "+:" + self.parentCode[iLast];
                             }
                         });
                         isNextStackLinked = true;
@@ -511,23 +481,23 @@ namespace Mindustry_Compiler
                 case LineClass.Else:
                     {
                         // Remove (reposition) the 'end if' label
-                        code[code.Count - 1] = IfStack_PopEndIfAliasForElseIf(code[code.Count - 1]);
+                        code[code.Count - 1] = IfStack_PopIfAliases(code[code.Count - 1]);
 
                         // Insert 'jumpToEndIf' at end of 'if' body ...
                         string skipElseAsm = BuildCode(
-                            "jump",                     // Op
-                            ifStackLastEndIfAlias,      // Line num
-                            "always",                   // Comp type
-                            "0",                        // Operand 1
-                            "0");                       // Operand 2
-                        code.Add(ifStackLastNextIfAlias + ":" + skipElseAsm);
+                            "jump",                         // Op
+                            ifStackLastEndIfAlias,          // Line num
+                            "always",                       // Comp type
+                            "0",                            // Operand 1
+                            "0");                           // Operand 2
+                        code.Add(ifStackLastNextIfAlias + "+:" + skipElseAsm);
 
                         stackFrames.Push(new StackFrame(this, code)
                         {
                             EndAction = (self) =>
                             {
                                 int iLast = self.parentCode.Count - 1;
-                                self.parentCode[iLast] = ifStackLastEndIfAlias + ":" + self.parentCode[iLast];
+                                self.parentCode[iLast] = ifStackLastEndIfAlias + "+:" + self.parentCode[iLast];
                             }
                         });
                         isNextStackLinked = true;
@@ -545,83 +515,61 @@ namespace Mindustry_Compiler
                 case LineClass.ForLoop:
                     {
                         // Process assign (as separate line)
-                        string init = lineMatch.GetStr("a");
-                        string comp = lineMatch.GetStr("b");
-                        string inc = lineMatch.GetStr("c");
-
-                        // ~~~~~~ A: initialization
-                        string[] forInits = init.Replace(",", "\n").Split('\n');
-                        if (forInits.Length > 0)
-                        {
-                            // remove 'int' type ...
-                            if (forInits[0].StartsWith("int "))
-                                forInits[0] = forInits[0].Substring(4);
-
-                            foreach (string forInit in forInits)
-                                ProcessLine(forInit);
-                        }
-
-                        // ~~~~~~ B: comparison/conditional jump instructions
-                        var compInstructions = new List<string>();
-                        string jumpEndAsm;
-                        string compRval;
-                        string jumpEndAlias = getNewJumpAlias();
+                        string forInit = lineMatch.GetStr("a");
+                        string forCondition = lineMatch.GetStr("b");
+                        string forIncrement = lineMatch.GetStr("c");
                         string jumpBodyAlias = getNewJumpAlias();
+                        string jumpEndAlias = getNewJumpAlias();
+                        var condCode = new List<string>();
+                        var incInstructions = new List<string>();
+                        LoopBreakStackPush(jumpEndAlias);
+                        using (var tir = new TemporaryInstructionRetarget(this, condCode))
+                            Branch_AddJumpAsmOptimized(jumpEndAlias, forCondition);
 
-                        using (var tir = new TemporaryInstructionRetarget(this, compInstructions))
+
+
+                        // Set 'i's ...
+                        string[] inits = forInit.Split(',');
+                        for (int i = 0; i < inits.Length; i++)
                         {
-                            compRval = ParseBool(comp);
-                            jumpEndAsm = BuildCode(
-                                "jump",             // Op
-                                jumpEndAlias,       // Line num
-                                "notEqual",         // Comp type
-                                compRval,           // Condition
-                                "true"              // True
-                                );
+                            // remove type ...
+                            inits[i] = Regex.Replace(inits[i].Trim(), @"(\w+\s*)*(?<name>\w+)", e => e.GetStr("name"));
+                            ProcessLine(inits[i]);
                         }
 
 
+                        // Skip to end?
+                        code.AddRange(condCode);
+                        
 
-                        // ~~~~~~ C: increment step
-                        var incInstructions = new List<string>();
-                        string[] incCommands = inc.Replace(",", "\n").Split('\n');
+                        // Body ...
+                        string[] incStrs = forIncrement.Split(',');
                         using (var tir = new TemporaryInstructionRetarget(this, incInstructions))
                         { 
-                            foreach(string incCommand in incCommands)
+                            foreach(string incCommand in incStrs)
                                 ProcessLine(incCommand);
                         }
-
-
-                        // Initial jump/skip codeblock (condition == false)?
-                        code.AddRange(compInstructions);
-                        code.Add(jumpEndAsm);
                         
-                        
-                        // Body + go to start
+
+                        // Go to start (after body)?
                         string initJump = getNewJumpAlias();
                         stackFrames.Push(new StackFrame(this, code)
                         {
                             EndAction_PreDumpToParent = (self) =>
                             {
                                 if (self.code.Count > 0)
-                                    self.code[0] = jumpBodyAlias + "+:" + self.code[0];
+                                    self.code[0] = jumpBodyAlias + ":" + self.code[0];
                             },
 
                             EndAction = (self) =>
                             {
-                                string jumpBodyAsm = BuildCode(
-                                "jump",             // Op
-                                jumpBodyAlias,      // Line num
-                                "equal",            // Comp type
-                                compRval,           // Condition
-                                "true"              // True
-                                );
-
-
-                                // End of loop (next -> jump to body again?)
+                                // Increment
                                 self.parentCode.AddRange(incInstructions);
-                                self.parentCode.AddRange(compInstructions);
-                                self.parentCode.Add(jumpEndAlias + ":" + jumpBodyAsm);
+
+                                // Jump to start again?
+                                condCode[condCode.Count - 1] = Branch_InvertConditionAndReplaceJump(condCode[condCode.Count - 1], jumpBodyAlias);
+                                condCode[condCode.Count - 1] = jumpEndAlias + "+:" + condCode[condCode.Count - 1];
+                                self.parentCode.AddRange(condCode);
 
                                 // Remove loop-stack entry ..
                                 LoopBreakStackPop();
@@ -636,84 +584,29 @@ namespace Mindustry_Compiler
                 case LineClass.WhileLoop:
                     {
                         // Process assign (as separate line)
-                        string comp = l.ScanToClosing(lineMatch.Groups["open"].Index);
-
-
-                        // ~~~~~~ A: comparison/conditional jump instructions
+                        string condition = l.ScanToClosing(lineMatch.Groups["open"].Index);
                         var compInstructions = new List<string>();
-                        string jumpEndAsm;
-                        string compRval;
                         string jumpEndAlias = getNewJumpAlias();
                         string jumpBodyAlias = getNewJumpAlias();
 
+                        // Skip body?
                         using (var tir = new TemporaryInstructionRetarget(this, compInstructions))
-                        {
-                            compRval = ParseBool(comp);
-                            if (compInstructions.Count == 0)
-                                throw new Exception("Loop condition is empty.");
-
-                            // Check if previous instruction is a simple comparison
-                            var rxSimpleCompare = new Regex(@"^op (?<op>\w+) (?<dest>\w+) (?<rest>.*)$");
-                            var match = rxSimpleCompare.Match(code[code.Count - 1]);
-                            var op = match.GetStr("op");
-
-                            // Simple comparison on last instruction? Hi-jack it ...
-                            if (op.Length > 0 && compMapAsmToInverse.ContainsKey(op))
-                            {
-                                string compInv = compMapAsmToInverse[op];
-                                string rest = match.GetStr("rest");
-                                jumpEndAsm = BuildCode(
-                                    "jump",                 // Op
-                                    jumpEndAlias,           // Line num
-                                    compInv,                // Comp type
-                                    rest                    // Operand 1 & 2
-                                    );
-                                code[code.Count - 1] = jumpEndAsm;
-
-                                // Pop unused intermediate ...
-                                intermediateValueIndex--;
-                            }
-
-                            // Complex comparison- compare against true
-                            else
-                            {
-                                jumpEndAsm = BuildCode(
-                                    "jump",                 // Op
-                                    jumpEndAlias,           // Line num
-                                    "notEqual",             // Comp type
-                                    compRval,               // Operand 1
-                                    "true"                  // Operand 2
-                                    );
-                                code.Add(jumpEndAsm);
-                            }
-                        }
-
-                        // Initial jump/skip codeblock (condition == false)?
+                            Branch_AddJumpAsmOptimized(jumpEndAlias, condition);
+                        string jumpToEnd = compInstructions[compInstructions.Count - 1];
+                        compInstructions[compInstructions.Count - 1] = jumpBodyAlias + "+:" + jumpToEnd;
                         code.AddRange(compInstructions);
 
-                        // Body + go to start
-                        string initJump = getNewJumpAlias();
+                        // Repeat body jump...
+                        string jumpBackUpAsm = Branch_InvertConditionAndReplaceJump(jumpToEnd, jumpBodyAlias);
+                        compInstructions[compInstructions.Count - 1] = jumpBackUpAsm;
+                        
                         stackFrames.Push(new StackFrame(this, code)
                         {
-                            EndAction_PreDumpToParent = (self) =>
-                            {
-                                if (self.code.Count > 0)
-                                    self.code[0] = jumpBodyAlias + "+:" + self.code[0];
-                            },
-
                             EndAction = (self) =>
                             {
-                                string jumpBodyAsm = BuildCode(
-                                "jump",             // Op
-                                jumpBodyAlias,      // Line num
-                                "equal",            // Comp type
-                                compRval,           // Condition
-                                "true"              // True
-                                );
-
                                 // End of loop (next -> jump to body again?)
+                                compInstructions[compInstructions.Count - 1] = jumpEndAlias + "+:" + compInstructions[compInstructions.Count - 1];
                                 self.parentCode.AddRange(compInstructions);
-                                self.parentCode.Add(jumpEndAlias + ":" + jumpBodyAsm);
 
                                 // Remove loop-stack entry ..
                                 LoopBreakStackPop();
@@ -729,81 +622,26 @@ namespace Mindustry_Compiler
                 case LineClass.DoWhileLoop:
                     {
                         // Process assign (as separate line)
-                        string comp = l.ScanToClosing(lineMatch.Groups["open"].Index);
-
-
-                        // ~~~~~~ A: comparison/conditional jump instructions
+                        string condition = l.ScanToClosing(lineMatch.Groups["open"].Index);
                         var compInstructions = new List<string>();
-                        string jumpEndAsm;
-                        string compRval;
                         string jumpEndAlias = getNewJumpAlias();
                         string jumpBodyAlias = getNewJumpAlias();
 
+                        // Repeat body jump...
                         using (var tir = new TemporaryInstructionRetarget(this, compInstructions))
-                        {
-                            compRval = ParseBool(comp);
-                            if (compInstructions.Count == 0)
-                                throw new Exception("Loop condition is empty.");
+                            Branch_AddJumpAsmOptimized(jumpBodyAlias, condition, true);
 
-                            // Check if previous instruction is a simple comparison
-                            var rxSimpleCompare = new Regex(@"^op (?<op>\w+) (?<dest>\w+) (?<rest>.*)$");
-                            var match = rxSimpleCompare.Match(code[code.Count - 1]);
-                            var op = match.GetStr("op");
-
-                            // Simple comparison on last instruction? Hi-jack it ...
-                            if (op.Length > 0 && compMapAsmToInverse.ContainsKey(op))
-                            {
-                                string compInv = compMapAsmToInverse[op];
-                                string rest = match.GetStr("rest");
-                                jumpEndAsm = BuildCode(
-                                    "jump",                 // Op
-                                    jumpEndAlias,           // Line num
-                                    compInv,                // Comp type
-                                    rest                    // Operand 1 & 2
-                                    );
-                                code[code.Count - 1] = jumpEndAsm;
-
-                                // Pop unused intermediate ...
-                                intermediateValueIndex--;
-                            }
-
-                            // Complex comparison- compare against true
-                            else
-                            {
-                                jumpEndAsm = BuildCode(
-                                    "jump",                 // Op
-                                    jumpEndAlias,           // Line num
-                                    "notEqual",             // Comp type
-                                    compRval,               // Operand 1
-                                    "true"                  // Operand 2
-                                    );
-                                code.Add(jumpEndAsm);
-                            }
-                        }
-
-                        // Body + go to start
-                        string initJump = getNewJumpAlias();
                         stackFrames.Push(new StackFrame(this, code)
                         {
-                            EndAction_PreDumpToParent = (self) =>
-                            {
-                                if (self.code.Count > 0)
-                                    self.code[0] = jumpBodyAlias + "+:" + self.code[0];
-                            },
-
                             EndAction = (self) =>
                             {
-                                string jumpBodyAsm = BuildCode(
-                                "jump",             // Op
-                                jumpBodyAlias,      // Line num
-                                "equal",            // Comp type
-                                compRval,           // Condition
-                                "true"              // True
-                                );
-
                                 // End of loop (next -> jump to body again?)
+                                compInstructions[compInstructions.Count - 1] = jumpEndAlias + "+:" + compInstructions[compInstructions.Count - 1];
                                 self.parentCode.AddRange(compInstructions);
-                                self.parentCode.Add(jumpEndAlias + ":" + jumpBodyAsm);
+
+                                // Prepend 'body start' label ...
+                                int ifirst = self.parentStartIndex;
+                                self.parentCode[ifirst] = jumpBodyAlias + ":" + self.parentCode[ifirst];
 
                                 // Remove loop-stack entry ..
                                 LoopBreakStackPop();
@@ -823,12 +661,16 @@ namespace Mindustry_Compiler
                         string breakJumpAlias = LoopBreakStackGetTop();
 
                         string asm = BuildCode(
-                            "set",              // Op
-                            "@counter",         // Destination
-                            breakJumpAlias      // Value
+                            "set",                  // Op
+                            "@counter",             // Destination
+                            breakJumpAlias          // Value
                             );
                         code.Add(asm);
                     }
+                    break;
+
+                case LineClass.Unit:
+                    ParseUnitControl(l);
                     break;
 
 
@@ -895,14 +737,14 @@ namespace Mindustry_Compiler
 
                         // Spin until elapsed
                         string sleepJumpAlias = getNewJumpAlias();
-                        code.Add(sleepJumpAlias + ":" + 
-                            BuildCode(
+
+                        string asm = BuildCode(
                                 "jump",
                                 sleepJumpAlias,
                                 "greaterThan",
                                 "__sleep_end_",
-                                "@time")
-                            );
+                                "@time");
+                        code.Add(sleepJumpAlias + ":" + asm);
                     }
                     break;
 
@@ -970,17 +812,13 @@ namespace Mindustry_Compiler
 
 
             // Prepend label again?
-            if (lineJumpLabel != "")
+            string prependLabel = jumpAliasProcessLineStack.Pop();
+            if (prependLabel.Length > 0)
             {
-                if (code.Count > codeCountStart)
-                {
-                    if (codeListStart.Count > 0)
-                        codeListStart[codeCountStart] = lineJumpLabel + ":" + codeListStart[codeCountStart];
-                    else
-                        codeListStart.Add(lineJumpLabel + ":");
-                }
+                if (prependLabel.Length > 0 && codeListStart.Count > codeCountStart)
+                    codeListStart[codeCountStart] = prependLabel + codeListStart[codeCountStart];
                 else
-                    codeListStart.Add(lineJumpLabel + ":");
+                    codeListStart.Add(prependLabel);
             }
         }
     }

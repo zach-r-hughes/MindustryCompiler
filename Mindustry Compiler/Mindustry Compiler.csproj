@@ -52,7 +52,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LoopStack.cs">
+    <Compile Include="Source\LoopStack.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Source\Alias.cs">
@@ -102,6 +102,9 @@
     <Compile Include="Source\Extension\StringBuilderExtensions.cs" />
     <Compile Include="Source\Extension\StringExtensions.cs" />
     <Compile Include="Source\TemporaryInstructionRetarget.cs" />
+    <Compile Include="Source\UnitControlParser.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <EmbeddedResource Include="CompiledAlertForm.resx">
       <DependentUpon>CompiledAlertForm.cs</DependentUpon>
     </EmbeddedResource>

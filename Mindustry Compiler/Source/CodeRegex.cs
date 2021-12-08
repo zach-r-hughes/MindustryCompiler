@@ -25,12 +25,14 @@ namespace Mindustry_Compiler
             Increment,
             Decrement,
             Print,
+            PrintFlush,
             Load,
             ForLoop,
             WhileLoop,
             DoWhileLoop,
             ControlEnable,
             ControlType,
+            Unit,
             StackStart,
             StackEnd,
             Return,
@@ -175,6 +177,11 @@ namespace Mindustry_Compiler
         readonly Regex rxPrint = new Regex(@"(?<lhs>print(ln)?)\s*\(");
 
         /// <summary>
+        /// Matches a print flush command.
+        /// </summary>
+        readonly Regex rxPrintFlush = new Regex(@"(?<lhs>printflush?)\s*(?<open>\()");
+
+        /// <summary>
         /// Matches an if statement.
         /// Groups: 'inner'
         /// </summary>
@@ -225,7 +232,7 @@ namespace Mindustry_Compiler
         /// Matches a line num target reference.
         /// Groups: 'alias', 'code'
         /// </summary>
-        readonly Regex rxJumpLineTarget = new Regex(@"^\s*(?<alias>\w+\+?)\s*:\s*(?<code>.*)$");
+        readonly Regex rxJumpLineTarget = new Regex(@"^\s*(?<alias>(\w+\+?\s*:)+)\s*(?<code>.*)\s*$");
 
         /// <summary>
         /// Matches any preprocessor derective.
@@ -292,7 +299,12 @@ namespace Mindustry_Compiler
         /// <summary>
         /// Matches a 'break' loop/switch keyword.
         /// </summary>
-        readonly Regex rxBreak = new Regex(@"break\s*(;|\n|$)");
+        readonly Regex rxBreak = new Regex(@"\bbreak\s*(;|\n|$)");
+
+        /// <summary>
+        /// Matches a unit control command.
+        /// </summary>
+        readonly Regex rxUnit = new Regex(@"\bunit\s*\.\s*(?<type>\w+)(?<rest>[^;]*);");
 
         //==============================================================================
         /// <summary>
@@ -322,6 +334,9 @@ namespace Mindustry_Compiler
 
             lineMatch = rxPrint.Match(code);
             if (lineMatch.Success) return LineClass.Print;
+
+            lineMatch = rxPrintFlush.Match(code);
+            if (lineMatch.Success) return LineClass.PrintFlush;
 
             lineMatch = rxSleepFunction.Match(code);
             if (lineMatch.Success) return LineClass.Sleep;
@@ -358,6 +373,9 @@ namespace Mindustry_Compiler
 
             lineMatch = rxReturn.Match(code);
             if (lineMatch.Success) return LineClass.Return;
+
+            lineMatch = rxUnit.Match(code);
+            if (lineMatch.Success) return LineClass.Unit;
 
             lineMatch = rxControlConfig.Match(code);
             if (lineMatch.Success) return LineClass.ControlType;

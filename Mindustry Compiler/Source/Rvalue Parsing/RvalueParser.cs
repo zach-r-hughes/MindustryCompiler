@@ -39,7 +39,7 @@ namespace Mindustry_Compiler
         /// <param name="rval"></param>
         /// <returns></returns>
         public bool IsRvalSingleVariable(string rval) =>
-            Regex.IsMatch(rval.Trim(), @"^\w+$");
+            Regex.IsMatch(rval.Trim(), @"^@?\w+$");
 
         /// <summary>
         /// Returns true if the r-value is either a constant or a single variable

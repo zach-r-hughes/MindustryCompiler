@@ -458,17 +458,15 @@ namespace Mindustry_Compiler
                 int condOpen = match.Groups["open"].Index;
                 int condClose;
                 string cond = source.ScanToClosing(condOpen, out condClose);
-
+                string cmd = match.Groups["fn"].Value.Trim();
 
                 source = source.ReplaceMatch(match.Groups["do"],
                     "do while(" + cond + ")" +
-                    " \n{\n\t" + match.Groups["fn"].Value + "\n}\n");
+                    " \n{\n\t" + cmd + (cmd.EndsWith(";") ? "" : ";") +
+                    "\n}\n");
 
                 match = rxDoWhileOneLine.Match(source);
             }
-
-
-            
         }
     }
 }

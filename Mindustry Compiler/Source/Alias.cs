@@ -1,13 +1,17 @@
 ﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Mindustry_Compiler
 {
     public partial class MindustryCompilerForm
     {
+        Stack<string> jumpAliasProcessLineStack;
+
         public void InitializeAliases()
         {
             jumpAliasIndex = 0;
             intermediateValueIndex = 0;
+            jumpAliasProcessLineStack = new Stack<string>();
         }
 
         //==============================================================================
@@ -20,9 +24,9 @@ namespace Mindustry_Compiler
         /// <summary>
         /// Returns a new, uniuque line number alias
         /// </summary>
-        string getNewJumpAlias(bool addOne = false) 
+        string getNewJumpAlias() 
         {
-            return jumpAliasPrefix + (jumpAliasIndex++).ToString() + "_" + (addOne ? "+" : "");
+            return jumpAliasPrefix + (jumpAliasIndex++).ToString() + "_";
         }
 
         /// <summary>
@@ -34,7 +38,7 @@ namespace Mindustry_Compiler
             var match = rxJumpLineTarget.Match(str);
             if (match.Success)
             {
-                label = match.GetStr("alias");
+                label += match.GetStr("alias");
                 str = match.GetStr("code");
             }
             return label;
@@ -45,6 +49,7 @@ namespace Mindustry_Compiler
         /// </summary>
         void FinalizeAliases()
         {
+            lastCode = "Finalize Aliases";
             var lineRefMap = new Dictionary<string, string>();
 
             // Find 'targets', save/remove prepend
@@ -58,58 +63,41 @@ namespace Mindustry_Compiler
                     if (alias.Contains("+")) 
                         target++;
 
-                    lineRefMap.Add(alias.Replace("+", ""), target.ToString());
+                    lineRefMap.Add(alias.Replace(":", "").Replace("+", ""), target.ToString());
                     code[i] = match.GetStr("code").Trim();
 
                     // Empty line after jump alias? prepend...
-                    if (code[i].Length == 0 && i < code.Count - 1)
-                    {
-                        code.RemoveAt(i);
-                        match = rxJumpLineTarget.Match(code[i]);
-                        i--;
-                    }
-                    else
-                    {
-                        match = rxJumpLineTarget.Match(code[i]);
-                    }
+                    match = rxJumpLineTarget.Match(code[i]);
                 }
-            }
 
-            // Find references to line num aliases
-            for (int i = 0; i < code.Count; i++)
-            {
-                var match = rxLineNumReference.Match(code[i]);
-                while (match.Success)
+                // Empy line now? Remove...
+                if (code[i].Length == 0)
                 {
-                    string alias = match.GetStr("alias").Replace("+", "");
-
-                    // Not a line ref? skip...
-                    if (lineRefMap.ContainsKey(alias))
-                        code[i] = code[i].ReplaceSection(match.Groups["alias"].Index, alias.Length, lineRefMap[alias].ToString());
-
-                    match = match.NextMatch();
+                    code.RemoveAt(i);
+                    i--;
                 }
             }
 
 
-            // Re-emplace string aliases ...
+            string codestr = string.Join("\n", code);
+
+            // Jump aliases ...
+            foreach (var strAlias in lineRefMap)
+            {
+                var rxAlias = new Regex(@"\b" + strAlias.Key + @"\b");
+                codestr = rxAlias.Replace(codestr, e => strAlias.Value.ToString());
+            }
+
+            // String literal aliases ...
             foreach (var strAlias in strAliasMap)
             {
-                var rxStrAlias = strAlias.Key;
-                var original = strAlias.Value;
-                
-                for (int i = 0; i < code.Count; i++)
-                {
-                    var match = rxStrAlias.Match(code[i]);
-                    while (match.Success)
-                    {
-                        code[i] = code[i].ReplaceMatch(match, original);
-                        match = rxStrAlias.Match(code[i]);
-                    }
-                }
+                var rxAlias = new Regex(@"\b(?<a>" + strAlias.Key + @")\b");
+                codestr = rxAlias.Replace(codestr, e => strAlias.Value);
             }
-        }
 
+
+            code = new List<string>(codestr.Split('\n'));
+        }
 
         //==============================================================================
         /// <summary>

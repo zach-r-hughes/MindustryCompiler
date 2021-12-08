@@ -95,5 +95,28 @@ namespace Mindustry_Compiler
             // Remove typenames from each string ...
             return output;
         }
+
+        /// <summary>
+        /// Returns true if the string is a number (flags for 'int only' and 'sign allowed')
+        /// </summary>
+        public static bool IsNumeric(this string str, bool integerOnly = true, bool noSign = true)
+        {
+            var match = Regex.Match(str, @"^\s*(?<sign>\+|\-)?[0-9]+(?<float>\.[0-9]*(f|F)?)*\s*$");
+
+            // Not even a number?
+            if (!match.Success)
+                return false;
+
+            // Sign allowed?
+            if (noSign && match.HasGroup("sign"))
+                return false;
+
+            // Only integer?
+            if (integerOnly && match.HasGroup("float"))
+                return false;
+
+            // Good
+            return true;
+        }
     }
 }

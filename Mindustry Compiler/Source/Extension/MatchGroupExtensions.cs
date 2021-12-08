@@ -21,7 +21,8 @@ namespace Mindustry_Compiler
 
 
         public static bool HasGroup(this Match match, string groupName) =>
-            GetWhere(match.Groups, e => e.Name == groupName) != null;
+            GetWhere(match.Groups, e => e.Name == groupName) != null &&
+            match.Groups[groupName].Length > 0;
 
 
         public static string GetStr(this Match match, string groupName)
