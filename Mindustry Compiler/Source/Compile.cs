@@ -30,7 +30,7 @@ namespace Mindustry_Compiler
                 .Replace("}", "\n}\n").Replace("\n\n}", "\n}").Replace("}\n\n", "}\n");
 
 
-                var preprocessDefines = new Dictionary<Regex, MatchEvaluator>();
+                
                 doPrintFlush = false;
 
                 // ~~~~~~ Create base program frame, and stack ...
@@ -42,6 +42,7 @@ namespace Mindustry_Compiler
                 InitializeFunctions(ref source);
                 InitializeIfStack();
                 InitializeLoopBreakStack();
+                InitializePreprocessor();
 
 
                 // ~~~~~~ Process lines
@@ -55,19 +56,10 @@ namespace Mindustry_Compiler
                     compileLineIndex = i;
 
 
-                    // Preprocessor?
-                    var preprocMatch = rxPreprocessor.Match(lines[i]);
-                    if (preprocMatch.Success)
-                    {
-                        ParsePreprocessorDefine(lines[i], preprocessDefines);
+                    // Preprocessor
+                    if (PreprocessLine(lines, i))
                         continue;
-                    }
-                    else if (preprocessDefines.Count > 0)
-                    {
-                        // Replace define keywords
-                        foreach (var pair in preprocessDefines)
-                            lines[i] = pair.Key.Replace(lines[i], pair.Value);
-                    }
+                    
 
                     ProcessLine(lines[i]);
                 }

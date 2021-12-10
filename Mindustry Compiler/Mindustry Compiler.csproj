@@ -61,6 +61,9 @@
     <Compile Include="Source\CodeRegex.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Source\Preprocessor.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Source\Rvalue Parsing\BoolComparisionParser.cs">
       <SubType>Form</SubType>
     </Compile>

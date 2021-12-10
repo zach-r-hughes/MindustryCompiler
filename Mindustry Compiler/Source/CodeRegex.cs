@@ -235,23 +235,6 @@ namespace Mindustry_Compiler
         readonly Regex rxJumpLineTarget = new Regex(@"^\s*(?<alias>(\w+\+?\s*:)+)\s*(?<code>.*)\s*$");
 
         /// <summary>
-        /// Matches any preprocessor derective.
-        /// </summary>
-        readonly Regex rxPreprocessor = new Regex(@"^\s*#.*$");
-
-        /// <summary>
-        /// Matches a preprocessor define.
-        /// Groups: 'a', 'b'
-        /// </summary>
-        readonly Regex rxPreprocessorDefine = new Regex(@"^#\s*define\s(?<a>\w+)\s+(?<b>.*)\s*$");
-
-        /// <summary>
-        /// Matches a preprocessor define function definition.
-        /// Groups: 'a', 'params', 'b'
-        /// </summary>
-        readonly Regex rxPreprocessorDefineFunction = new Regex(@"^#\s*define\s(?<a>\w+)\((?<params>[^\)]+)\)\s+(?<b>.*)\s*$");
-
-        /// <summary>
         /// Matches a 'go to' statement.
         /// Groups: 'label'
         /// </summary>
