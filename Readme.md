@@ -1,4 +1,3 @@
-
 ![Mindustry Compiler Icon](https://i.imgur.com/xW0zxYJ.png)
 
 [Pre-built Download Link](https://drive.google.com/file/d/19FnpmbfQjmygNILdxbs0cxcK3vB5If4_/view?usp=sharing)
@@ -32,9 +31,28 @@ __Features__
 * Direct assembly injection (`asm()`)
 * Preprocessor `#defines`
 
-# Program Structure
 
-__basic program__
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+
+<details>
+	<summary>
+		<h1>Overview and Syntax</h1>
+	</summary>
+
+<h3>Program Structure</h3>
+	
+--------------------------------------------------
+
+	
+Compiled programs can use either a basic one-shot script structure, or an advanced `main` loop, which separates initialization from the body of the program.
+	
+> <b>Basic Script</b>: The program is run from beginning to end, then restarts (all variable values are lost).
+	
+> <b>Advanced Script</b>: Code outside `main` is run once. Then, the main loop repeats indefinitely (variable values are kept).
+	
+<b>Basic Structure Example</b>
+	
 ```c
 // This is a simple program
 conveyor1.enabled = false;
@@ -43,14 +61,13 @@ conveyor1.enabled = true;
 sleep(1);
 ```
 
-__advanced program__
+<b>Advanced Structure Example</b>
+	
 ```c
-// Initialization code
-// Code that is outside 'main()' runs only once on start.
+// Initialization (outside main runs on start)
 i = 0;
 
-// Main function
-// Loops forever. Variable values do not reset on loop.
+// Main function (loops forever)
 void main()
 {
 	i++;
@@ -60,8 +77,12 @@ void main()
 ```
 
 
-### Typenames
+<h3>Typenames</h3>
+	
+--------------------------------------------------
+	
 Typenames are ignored.
+	
 ```c
 // Type names do not matter (left in for C-style compatibility)
 static const volatile int number = "hello world";
@@ -71,8 +92,12 @@ println(number);
 // Python style-compatible (assign, no declare/typename)
 myStr = "hello";
 ```
-### Return
-Return either exits a custom function, or ends program execution (if inside `main()`)
+	
+<h3>Return</h3>
+
+--------------------------------------------------
+
+Return either exits a custom function, or ends program execution (if elsewhere, eg. inside `main()` )
 ```c
 void myFunction()
 {
@@ -91,9 +116,21 @@ void main()
 	return;
 }
 ```
+	
+</details>
 
 
-# Basic Functions
+
+
+
+
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<details>
+	<summary>
+		<h1>Basic Functions</h1>
+	</summary>
+
 
 ### print(_value_, _value2_, _value3_, ...)
 ### println(print(_value_, _value2_, _value3_, ...)
@@ -144,36 +181,7 @@ asm(printflush message3);
 // Turns conveyor1 off
 asm(control enabled conveyor1 0);
 ```
-# Logic (Branch, Loop)
-___Note:__ Branches need to start and end with `{` and `}` respecitvely (implied, one-line loops/branches not yet supported)._
-### If /Else-if/Else
-```c
-// Standard if/else-if/else logic.
-if (a == 25)
-{
-	// action
-}
-else if(b < c - d && e == 2.71)
-{
-	// other action
-}
-else
-{
-	// different action
-}
-```
-
-### For Loop
-```c
-// Counts from 0 -> max - 1
-// Type names are auto--removed on compile (left in for 'C-style')
-for (int i = 0; i < max; i++)
-{
-	println("Current value: ", i);
-}
-```
-
-
+	
 # Math Functions
 
 ```c
@@ -199,9 +207,75 @@ z = max(3, 100000);
 
 ```
 
+</details>
+
+	
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<details>
+	<summary>
+		<h1>Logic (Branch, Loop)</h1>
+	</summary>
+	
+### If /Else-if/Else
+```c
+// Standard if/else-if/else logic.
+if (a == 25)
+{
+	i++;
+	println("a equals", 25);
+}
+else if(b < c - d && e == 2.71)
+	println("something else is happening here");
+
+else
+{
+	i = 0;
+	println("else block. i now = ", 0);
+}
+```
+	     
+	     
+### While/Do-While Loop
+
+```c
+// While loop
+while (conveyor1.totalItems == 0)
+{
+	i++;
+}
 
 
-# Memory
+// Do-while loop
+do
+{
+	x += 3;
+	println("x ain't 75");
+	printflush();
+} while (x != 75);
+```
+	    
+### For Loop
+> __Note:__ typenames (eg. `int i`) are ignored by compiler (left in for C-style compatibility)
+```c
+// Counts from 0 -> max - 1
+for (int i = 0; i < max; i++)
+{
+	println("Current value: ", i);
+}
+```
+
+</details>
+
+
+	
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<details>
+	<summary>
+		<h1>Memory Cells</h1>
+	</summary>
+	
 ```c
 // Read/write to memory using standard array notation.
 // If a cell # is not specified, default is 'cell 1'
@@ -219,9 +293,17 @@ for (int i = 0; i < 10; i++)
 }
 ```
 
+</details>
 
 
-## Game Object Control (sensor/control)
+	
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<details>
+	<summary>
+		<h1>Object Control (Conveyors, Unloaders, etc.)</h1>
+	</summary>
+
 ```c
 // Get or set properties objects using dot-properties.
 // (equivalent to 'control/sensor' commands)
@@ -229,22 +311,33 @@ for (int i = 0; i < 10; i++)
 // Turn conveyors/buildings on or off
 conveyor1.enabled = false;
 driver3.enabled = x > 3 && y - 2 == 1;
+	
+// Wait for 'vault1' to get some copper ...
+wait (vault1.copper >= 25);
 
 // Set the 'type' of an unloader ('type' auto-remaps to 'config')
 unloader1.type = @copper;
 unloader2.config = @titanium
 
-// Get the amount of silicon in 'vault1' ...
-println(vault1.copper);
+// print the amount of silicon in 'vault1' ...
+println(vault1.silicon);
+	
 if (vault1.totalItems < 5)
-{
 	println("your vault is empty bruh");
-}
 ```
-## Preprocessor #define
+			  
+</details>
+			  
+			  
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<details>
+	<summary>
+		<h1>Preprocessor</h1>
+	</summary>
+	
 ```c
 // C-style preprocessor defines (primative implementation)
-// Preprocessor functions are not supported (yet).
 
 // Tell compiler to replace 'Q' with 'cell[35 + x]'
 #define Q cell[35 + x]
@@ -253,7 +346,27 @@ x = 2;
 Q = 3 * x;
 println(cell[35 + x]);
 // prints '6';
+	
+// Redefine 'Q' ...
+#define Q println("hello world")
+Q;
+
+// Undefine 'Q' ...
+#undef Q
+
+// Define a preprocessor function 'SHOW()'
+#define SHOW(OBJ, RES) println("Amount of ", RES, " = ", OBJ.RES)
+SHOW(conveyor1, silicon);
 ```
+</details>
+	
+	
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<details>
+	<summary>
+		<h1>Custom Function</h1>
+	</summary>
 
 ### Main function
 The main loop of the funciton. Loops forever. Calling `return` in main will 'end' the program, starting it over (re-initialize).
@@ -297,6 +410,7 @@ int returnANumber()
 }
 ```
 * Pre-defined variables with the same name as parameters are saved. Defining a variable `num` in the main loop, then calling a function with a parameter named `num` will _not_ overwrite the main function's version. However, any variables that do not share names with a parameter are modifiable.
+	
 ```c
 // Funciton with parameter named 'num'
 void doThing(num)
@@ -336,3 +450,5 @@ void second()
 second();
 println("done");
 ```
+	
+</details>
