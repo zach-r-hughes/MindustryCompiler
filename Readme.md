@@ -134,6 +134,7 @@ void main()
 
 ### print(_value_, _value2_, _value3_, ...)
 ### println(print(_value_, _value2_, _value3_, ...)
+### printflush( _target (optional)_ )
 ```c
 // Appends a value to the print output (optionally with a line end)
 
