@@ -37,12 +37,12 @@ namespace Mindustry_Compiler
                 compileLineIndex = -1;
                 lastLineClass = "Preformat Code";
                 InitializeAliases();
+                InitializeLoopBreakStack();
+                InitializeIfStack();
                 InitalizeStackFrames();
                 PreFormatSource(ref source);
+                InitializePreprocessor(ref source);
                 InitializeFunctions(ref source);
-                InitializeIfStack();
-                InitializeLoopBreakStack();
-                InitializePreprocessor();
 
 
                 // ~~~~~~ Process lines
@@ -54,12 +54,6 @@ namespace Mindustry_Compiler
                     lines[i] = lines[i].Trim();
                     lastCode = lines[i];
                     compileLineIndex = i;
-
-
-                    // Preprocessor
-                    if (PreprocessLine(lines, i))
-                        continue;
-                    
 
                     ProcessLine(lines[i]);
                 }
@@ -89,10 +83,6 @@ namespace Mindustry_Compiler
             // Copy asm to clipboard ...
             return String.Join("\n", code.ToArray());
         }
-
-
-
-        
 
 
         //==============================================================================
@@ -499,7 +489,16 @@ namespace Mindustry_Compiler
 
                 case LineClass.FunctionCall:
                     {
-                        var fnCallCode = CreateFunctionCall(lineMatch.GetStr("fname"), lineMatch.GetStr("params"));
+                        string fnName = lineMatch.GetStr("fname");
+                        string fnParams = lineMatch.GetStr("params");
+                        var fnObj = new FunctionInfo(fnName, fnParams);
+
+                        // Built in function? ...
+                        if (builtInFunctions.Contains(fnObj))
+                            break;
+
+                        // Custom function
+                        var fnCallCode = CreateFunctionCall(fnName, fnParams);
                         code.AddRange(fnCallCode);
                     }
                     break;

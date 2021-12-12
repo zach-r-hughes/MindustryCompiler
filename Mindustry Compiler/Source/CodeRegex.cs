@@ -260,7 +260,7 @@ namespace Mindustry_Compiler
         /// Matches a 'sleep for seconds' function call.
         /// Groups: 'param'
         /// </summary>
-        readonly Regex rxSleepFunction = new Regex(@"^\b*sleep\s*\(\s*(?<param>.*)\s*\)\s*;?\s*$");
+        readonly Regex rxSleepFunction = new Regex(@"^\s*sleep\s*\(\s*(?<param>.*)\s*\)\s*;?\s*$");
 
         /// <summary>
         /// Matches a 'wait for condition' function call.

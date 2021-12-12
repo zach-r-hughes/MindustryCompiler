@@ -165,6 +165,8 @@ namespace Mindustry_Compiler
         {
             if (e.ChangeType != WatcherChangeTypes.Deleted)
             {
+                System.Threading.Thread.Sleep(250);
+
                 // Compile into 'asm' window ..
                 CompileFromSourceFile();
             }

@@ -182,6 +182,11 @@ namespace Mindustry_Compiler
                         ParseMainFunction(match, ref source);
                     }
 
+                    else if(builtInFunctions.Contains(fnObj))
+                    {
+                        continue;
+                    }
+
                     // ~~~~~~~~ Custom function definition
                     else
                     {
