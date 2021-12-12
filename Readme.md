@@ -135,13 +135,19 @@ void main()
 ### print(_value_, _value2_, _value3_, ...)
 ### println(print(_value_, _value2_, _value3_, ...)
 ### printflush( _target (optional)_ )
+
+> __Note:__ If a `print` command is compiled, the compiler will automatically append a `printflush` to the end of the program/end of `main()` to _message1_. You can still call the function directly though.
 ```c
 // Appends a value to the print output (optionally with a line end)
 
 print("Right now, ");
 println("'x' is currently equal to ", x);
+printflush(message2);
+sleep(2);
+print("all done");
 
-// Output: "Right now, 'x' is currently equal to 5"
+// Output: "Right now, 'x' is currently equal to 5" to messageblock 2
+// Then, 2 seconds later, "all done". The compiler will automatically flush the message to message block 1.
 ```
 
 ### Wait
