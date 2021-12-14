@@ -216,6 +216,63 @@ z = max(3, 100000);
 
 </details>
 
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
+<details>
+	<summary>
+		<h1>Enum Definitions</h1>
+	</summary>
+
+> __Note__: Enum types are interpreted as int constants. They follow C-style behavior, where each successive element is the increment of the last	
+
+```c
+// Enum definition
+enum StateEnum
+{
+	Starting,	// equals 0
+	Going,		// equals 1
+	Ending,		// equals 2
+	Invalid = -4,	// Explicit value equals -4
+	Error,		// equals -3
+	Explode,	// equals -2
+}
+
+
+// Initialize state (to 0)...
+myState = StateEnum::Starting;
+	
+// Main loop
+void main()
+{
+	// Do enum-based behavior
+	switch(myState)
+	{
+	case StateEnum::Starting:
+		println("State is starting");
+		printflush();
+		myState = StateEnum::Going;
+		break;
+
+	case StateEnum::Going:
+		println("Going...");
+		printflush();
+		myState = StateEnum::Explode;
+		break;
+
+	default:
+		println("EXPLODE");
+		printflush();
+		myState = StateEnum::Starting;
+		break;
+	}
+	
+	sleep(1);
+}
+
+```	
+	
+</details>
+
 	
 <!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
 <!-- MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //-->
@@ -240,6 +297,47 @@ else
 	i = 0;
 	println("else block. i now = ", 0);
 }
+```
+
+
+### Switch
+```c
+
+enum MyEnum
+{
+	NormalCase = 3,
+	SpecialCase = 25,
+}
+
+// x is a variable value ...
+switch(x)
+{
+
+// If x==1 ...
+case 1:
+	conveyor1.enabled = false;
+	break;
+
+// If x==2 ...
+case 2:
+	conveyor1.enabled = true;
+	break;
+
+// Fall through supported (no break)
+
+
+	
+case MyEnum::NormalCase:
+case MyEnum::SpecialCase:
+	println("x is either Normal or Special");
+	break;
+	
+// Default case (if all others aren't true)
+default:
+	println("yeah, x is something else");
+	break;
+}
+
 ```
 	     
 	     
