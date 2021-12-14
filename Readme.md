@@ -302,14 +302,17 @@ else
 
 ### Switch
 ```c
-
+// Create enum (some compile-time constants)
 enum MyEnum
 {
 	NormalCase = 3,
 	SpecialCase = 25,
 }
 
-// x is a variable value ...
+
+// 'x' is a variable value ...
+// All 'cases' must be compile-time constants
+// Use 'if' for variable-cases instead
 switch(x)
 {
 
@@ -323,10 +326,7 @@ case 2:
 	conveyor1.enabled = true;
 	break;
 
-// Fall through supported (no break)
-
-
-	
+// Fall through supported (no break between cases)
 case MyEnum::NormalCase:
 case MyEnum::SpecialCase:
 	println("x is either Normal or Special");
