@@ -204,7 +204,7 @@ result = (x + 4) % 25;
 // Trig functions
 result = (sin(x) * cos(y)) / tan(z);
 
-// Floor/Ceil (outputs '2' and '4')
+// Floor/Ceil (outputs '3' and '4')
 result = ceil(2.1)
 result = floor(4.9);
 
